@@ -13,7 +13,7 @@ cat > login.json <<EOF
                    "special_character_start_list_bottom": false, "reject_duplicate_servers": false},
   "world_configuration": {"address": "0.0.0.0", "listen_port": 5998},
   "web_api": {"enabled": false, "port": 6000},
-  "security": {"mode": 0, "allow_password_login": true, "allow_token_login": false},
+  "security": {"mode": 14, "allow_password_login": true, "allow_token_login": false},
   "logging": {"trace": false, "world_trace": false, "dump_packets_in": false, "dump_packets_out": false},
   "client_configuration": {"titanium_port": 5998, "titanium_opcodes": "login_opcodes.conf",
                            "sod_port": 5999, "sod_opcodes": "login_opcodes_sod.conf",
