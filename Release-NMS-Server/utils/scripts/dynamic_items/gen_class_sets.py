@@ -101,6 +101,7 @@ for item_id, cid, p in items:
     if look:
         over['material'] = str(look.get('chest_material', look['material']) if p['name'] == 'Chestguard' else look['material'])
         over['color'] = str(0xFF000000 | int(look['color'], 16))
+        over['icon'] = str(s['icons'][str(look['material'])][str(p['block'])])
     cols = ', '.join(f'`{c}`' for c in item_cols)
     vals = ', '.join(over.get(c, f'`{c}`') for c in item_cols)
     sql.append(f'INSERT INTO items ({cols}) SELECT {vals} FROM items WHERE id = {s["shell_item"]};')

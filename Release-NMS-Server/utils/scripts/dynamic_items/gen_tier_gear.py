@@ -137,7 +137,11 @@ for t in tiers:
             src = cs['item_id_base'] + p['block'] + cid
             iid = tier_item_id(t['tier'], p['block'], cid)
             name = name_of(t['prefix'], f"{theme} {p['name']}")
-            sql.append(copy_row('items', item_cols, src, {'id': str(iid), 'Name': quote(name), 'lore': quote(name)}))
+            over = {'id': str(iid), 'Name': quote(name), 'lore': quote(name)}
+            dark = cs['dark_icons'].get(str(cs['looks'][str(cid)]['material']))
+            if dark and t['tier'] in cs['dark_icon_tiers']:
+                over['icon'] = str(dark[str(p['block'])])
+            sql.append(copy_row('items', item_cols, src, over))
             dynamic_rows.append((iid, cid, t['tier'], round(p['stat_multiplier'] * t['mult'], 4), 'Class set piece'))
             set_item_rows.append((iid, set_id))
             vendor_items[('armor', t['tier'])].append((iid, 1 << (cid - 1)))
