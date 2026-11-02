@@ -276,8 +276,8 @@ story += bullets([
     "you use clickies stored in it, and opens your bank and a merchant from anywhere.",
     "<b>Personal loot (/nmsloot).</b> When a mob dies, every group or raid member in the zone gets their own "
     "loot roll, offered in the /nmsloot window: keep it, sell it for platinum on the spot, or pass it to someone. "
-    "Coin is split automatically. Grouped, the corpse's normal loot is replaced by these personal rolls; solo, "
-    "you keep the corpse loot and your personal roll.",
+    "Coin is split automatically. These personal rolls replace the corpse's normal loot, solo or grouped; quest "
+    "items stay on the corpse.",
     "<b>Melee while casting.</b> Auto-attack and ranged attacks keep going while you cast.",
     "<b>Gear sets.</b> Saving a set in the Bandolier window also remembers every worn slot. Loading it, or "
     "<b>#gear load &lt;n&gt;</b>, swaps your whole outfit from your bags, even in combat. <b>#gear list</b> shows your sets.",
@@ -305,6 +305,7 @@ story.append(table([
     ["Chronal Quartermaster", "Tier 1 class armor, for Chronal Shards."],
     ["Tier vendors", "Armor, jewelry and augments for each gear tier, three vendors per tier, each titled with what it sells (for example \"Tier 2 Jewelry\")."],
     ["Chronal Artificer", "Reforges rolled gear (see Chapter 5)."],
+    ["Soulbinder Ilsara", "Binds your soul, so you can respawn right beside the rifts."],
 ], [1.6 * inch, CW - 1.6 * inch], bold_first_col=True))
 story.append(P("When you hail Zebuxoruk:", "h3"))
 story.append(P("\u201cAh, another mind drawn to the edge of everything. I am Zebuxoruk, and the Chronal Fabric "

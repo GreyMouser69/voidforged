@@ -1,4 +1,4 @@
-# Voidforged in Docker: the game server plus its database. See README.md in this folder.
+# Voidforged in Docker: the game server, login server and database. See README.md in this folder.
 services:
   db:
     image: mariadb:11.8
@@ -13,9 +13,28 @@ services:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       retries: 30
-    # No published ports: the database is only reachable from the server container.
+    # No published ports: the database is only reachable from the other containers.
+
+  login:
+    image: voidforged-server
+    restart: unless-stopped
+    entrypoint: ["sh", "/opt/vf/start-login.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      LOGIN_DB_NAME: ${LOGIN_DB_NAME:-voidforged_login}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set it in .env}
+      LOGIN_AUTO_CREATE_ACCOUNTS: ${LOGIN_AUTO_CREATE_ACCOUNTS:-true}
+    # World reaches the login server's TCP 5998 inside Docker; only the client ports are published.
+    ports:
+      - "5998:5998/udp"
+      - "5999:5999/udp"
+    volumes:
+      - login:/data
 
   server:
+    image: voidforged-server
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -25,6 +44,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      login:
+        condition: service_started
     environment:
       DB_NAME: ${DB_NAME:-peq}
       DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set it in .env}
@@ -32,8 +53,8 @@ services:
       SERVER_LONGNAME: ${SERVER_LONGNAME:-Voidforged}
       PUBLIC_ADDRESS: ${PUBLIC_ADDRESS:?set it in .env}
       WORLD_KEY: ${WORLD_KEY:?set it in .env}
-      LOGIN_HOST: ${LOGIN_HOST:?set it in .env}
-      LOGIN_PORT: ${LOGIN_PORT:-5998}
+      LOGIN_HOST: login
+      LOGIN_PORT: "5998"
     ports:
       - "9000:9000/udp"
       - "7001-7030:7001-7030/udp"
@@ -43,4 +64,5 @@ services:
 
 volumes:
   db:
+  login:
   data:

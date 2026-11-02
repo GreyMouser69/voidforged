@@ -17,8 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends libsodium23 lib
     libdbd-mysql-perl mariadb-client ca-certificates procps
 COPY --from=build /build/bin/ /opt/vf/bin/
 COPY utils/patches/ /opt/vf/patches/
-COPY docker/start.sh /opt/vf/start.sh
+COPY loginserver/login_util/login_opcodes*.conf /opt/vf/login/
+COPY docker/start.sh docker/start-login.sh /opt/vf/
 # A Windows checkout gives these CRLF line endings, which sh can't run
-RUN sed -i 's/\r$//' /opt/vf/start.sh
+RUN sed -i 's/\r$//' /opt/vf/start.sh /opt/vf/start-login.sh
 WORKDIR /data
 ENTRYPOINT ["sh", "/opt/vf/start.sh"]

@@ -29,6 +29,14 @@ CUSTOM_CONTENT = [
 
 CLIENT_SPELL_ID_LIMIT = 45000
 
+# Published rule values that differ from the dumping server's own: appended to the snapshot only, never written to
+# the database being dumped
+PUBLISHED_RULES = {
+    'Custom:AutoScribeSpells': 'false',
+    'Custom:AutoLearnDisciplines': 'false',
+    'Custom:NmsLootEmptySoloCorpse': 'true',
+}
+
 
 def schema_tables(func):
     src = open(os.path.join(ROOT, 'common', 'database_schema.h'), encoding='utf-8', errors='ignore').read()
@@ -62,6 +70,9 @@ def main():
             subprocess.run(['mysqldump', f'--defaults-extra-file={opts}', '--single-transaction', '--skip-comments',
                             '--no-tablespaces', '--default-character-set=utf8mb4', db['db']] + tables,
                            stdout=f, check=True)
+            for rule, value in PUBLISHED_RULES.items():
+                f.write(f"REPLACE INTO rule_values (ruleset_id, rule_name, rule_value, notes) "
+                        f"VALUES (1, '{rule}', '{value}', '');\n".encode())
 
         os.makedirs(os.path.dirname(args.out), exist_ok=True)
         # The client spell file, from the server's own exporter (it rewrites rows; a raw spells_new dump won't match)
