@@ -1,7 +1,7 @@
 #!/bin/sh
 # Writes the server config from the environment, then starts shared_memory, world and the zone launcher.
 set -e
-mkdir -p /data/shared /data/logs
+mkdir -p /data/shared /data/logs /data/export
 cd /data
 
 for x in quests lua_modules maps plugins; do ln -sfn "/runtime/$x" "$x"; done

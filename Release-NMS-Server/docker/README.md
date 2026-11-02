@@ -28,4 +28,5 @@ Open UDP 5998, 5999, 9000 and 7001-7030 to players. Keep the database closed: th
   IDs the client can't handle (see `common/repositories/spells_new_repository.h`).
 - **Zone count:** `eqlaunch zone` starts what the `launcher` table says. Each idle zone uses about 75 MB, more with
   players in it.
-- **Backups aren't set up here yet.** Dump the database on a schedule before real players use it.
+- **Backups:** `backup.sh` dumps both databases to `~/voidforged/backups` and keeps 14 days (`BACKUP_DIR` and `KEEP_DAYS`
+  change that). Run it from cron and copy the dumps to another machine; they hold player data and password hashes.
