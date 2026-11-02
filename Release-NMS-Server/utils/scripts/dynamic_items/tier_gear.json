@@ -16,7 +16,7 @@
   "item_base": 940000,
   "tier_item_step": 5000,
   "nonvis_set_base": 1000,
-  "spell_id_base": 50001,
+  "spell_id_base": 44001,
 
   "nonvis_look_shell": 900101,
   "nonvis_pieces": [

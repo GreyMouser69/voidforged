@@ -103,7 +103,7 @@ Golem), prefix Chronal for tier 1.
 - Data: `utils/scripts/dynamic_items/gen_tier_gear.py <eqemu_config.json> class_sets.json tier_gear.json <out.sql>`
   (output committed as `2026_10_23_tier_gear.sql`). It rebuilds its own id ranges on every run:
   items 940000-964999 (item = 940000 + (tier - 1) * 5000 + block + class; augments block 1800),
-  armor sets tier * 100 + class, non-visible sets 1000 + tier * 100 + class, spells 50001-50024,
+  armor sets tier * 100 + class, non-visible sets 1000 + tier * 100 + class, spells 44001-44029,
   vendor npcs 1200030-1200043 (spawngroups named `rift_tier_vendor_<npc id>`).
 - New items and spells load into shared memory at server start, so they appear after a restart.
 - Unlock bucket: `rift_core.lua` writes the character bucket `rift_deepest` on each new deepest clear;
