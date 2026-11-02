@@ -26,7 +26,7 @@ return {
     { zone_id = 351, short_name = "dreadspire",  name = "Dreadspire Keep",                     x = 1358, y = -1030, z = -572, h = 336, version = 2 },
     { zone_id = 32 , short_name = "soldungb",    name = "Nagafen's Lair",                      x = -263, y = -424, z = -108, h = 128, version = 2 },
     { zone_id = 113, short_name = "kael",        name = "Kael Drakkel",                        x = -633, y = -47, z = 128, h = 240 },
-    { zone_id = 453, short_name = "oldkaesoraa", name = "Kaesora Library",                     x = 34, y = -21, z = 3, h = 128 },
+    { zone_id = 453, short_name = "oldkaesoraa", name = "Kaesora Library",                     x = 34, y = -21, z = 3, h = 384 },
     { zone_id = 317, short_name = "anguish",     name = "Anguish, the Fallen Palace",          x = -9, y = -2466, z = -79, h = 0 },
     { zone_id = 402, short_name = "frostcrypt",  name = "Frostcrypt, Throne of the Shade King", x = 0, y = -40, z = 2, h = 0 },
     { zone_id = 491, short_name = "convorteum",  name = "The Convorteum",                      x = 28, y = -24, z = -42, h = 0 },

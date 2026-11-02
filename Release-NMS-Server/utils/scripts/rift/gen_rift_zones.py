@@ -41,7 +41,7 @@ DEFAULT_ENTRY = {'sleeper': (1, -40, 3), 'chapterhouse': (13, -13, 0)}
 ENTRY_HEADING = {'codecay': 128, 'sebilis': 256, 'chardok': 384, 'befallen': 384, 'karnor': 384,
                  'mistmoore': 0, 'fearplane': 0, 'cazicthule': 128, 'charasis': 128, 'permafrost': 256,
                  'sleeper': 128, 'velketor': 384, 'hateplaneb': 448, 'akheva': 0, 'griegsend': 256,
-                 'dreadspire': 336, 'soldunga': 384, 'soldungb': 128, 'kael': 240, 'oldkaesoraa': 128,
+                 'dreadspire': 336, 'soldunga': 384, 'soldungb': 128, 'kael': 240, 'oldkaesoraa': 384,
                  'anguish': 0, 'frostcrypt': 0, 'convorteum': 0, 'kaesora': 256, 'somnium': 256,
                  'riftseekers': 0, 'chapterhouse': 128, 'ashengate': 0}
 
