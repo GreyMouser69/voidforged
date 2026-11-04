@@ -480,7 +480,17 @@ int command_realdispatch(Client *c, std::string message, bool ignore_status)
 
 	const auto arguments = sep.argnum;
 
-	if (arguments) {
+	// A top-level alias of a sub command (#fz for #find zone) uses that sub command's access
+	for (const auto &e : command_subsettings) {
+		if (Strings::Contains(Strings::Split(e.top_level_aliases, "|"), command)) {
+			can_use_subcommand       = c->Admin() >= static_cast<int16>(e.access_level);
+			is_subcommand            = true;
+			found_subcommand_setting = true;
+			break;
+		}
+	}
+
+	if (arguments && !found_subcommand_setting) {
 		const std::string& sub_command = sep.arg[1];
 
 		for (const auto &e : command_subsettings) {

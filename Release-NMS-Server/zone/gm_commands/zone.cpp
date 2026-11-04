@@ -1,5 +1,6 @@
 #include "../bot.h"
 #include "../client.h"
+#include "../../common/repositories/doors_repository.h"
 
 void command_zone(Client *c, const Seperator *sep)
 {
@@ -54,6 +55,34 @@ void command_zone(Client *c, const Seperator *sep)
 		return;
 	}
 
+	// players need the key that the zone's locked entrance door asks for (Sleeper's Tomb, Vex Thal, the Mire)
+	if (c->Admin() < AccountStatus::Guide) {
+		const auto &key_doors = DoorsRepository::GetWhere(
+			content_db,
+			fmt::format(
+				"dest_zone = '{}' AND zone != dest_zone AND keyitem > 1 AND version = 0",
+				Strings::Escape(ZoneName(zone_id))
+			)
+		);
+
+		bool has_key = key_doors.empty();
+		for (const auto &d : key_doors) {
+			if (c->KeyRingCheck(d.keyitem) || c->GetInv().HasItem(d.keyitem, 1) != INVALID_INDEX) {
+				has_key = true;
+				break;
+			}
+		}
+
+		if (!has_key) {
+			const auto *key = database.GetItem(key_doors.front().keyitem);
+			c->Message(
+				Chat::White,
+				fmt::format("You need {} to enter that zone.", key ? key->Name : "the entrance key").c_str()
+			);
+			return;
+		}
+	}
+
 	// This block is necessary to clean up any bot objects owned by a Client
 	if (RuleB(Bots, Enabled) && zone_id != c->GetZoneID()) {
 		Bot::ProcessClientZoneChange(c);
@@ -66,11 +95,16 @@ void command_zone(Client *c, const Seperator *sep)
 		return;
 	}
 
-	// coordinates
-	auto x         = sep->IsNumber(2) ? Strings::ToFloat(sep->arg[2]) : 0.0f;
-	auto y         = sep->IsNumber(3) ? Strings::ToFloat(sep->arg[3]) : 0.0f;
-	auto z         = sep->IsNumber(4) ? Strings::ToFloat(sep->arg[4]) : 0.0f;
-	auto zone_mode = sep->IsNumber(2) ? ZoneSolicited : ZoneToSafeCoords;
+	// coordinates: players always land at the safe spot, so they can't skip past locked doors
+	const bool use_coords = sep->IsNumber(2) && c->Admin() >= AccountStatus::Guide;
+	if (sep->IsNumber(2) && !use_coords) {
+		c->Message(Chat::White, "Coordinates are GM-only; sending you to the zone's safe spot.");
+	}
+
+	auto x         = use_coords ? Strings::ToFloat(sep->arg[2]) : 0.0f;
+	auto y         = use_coords && sep->IsNumber(3) ? Strings::ToFloat(sep->arg[3]) : 0.0f;
+	auto z         = use_coords && sep->IsNumber(4) ? Strings::ToFloat(sep->arg[4]) : 0.0f;
+	auto zone_mode = use_coords ? ZoneSolicited : ZoneToSafeCoords;
 
 	c->MovePC(
 		zone_id,
