@@ -7,6 +7,9 @@ for a fresh install, and run it. It downloads whatever differs from the Voidforg
 - Only files that differ are downloaded. Each file is checked against its md5 before it replaces anything.
 - Player settings (`eqclient.ini` and similar) are installed only when missing. Character UI files, logs,
   screenshots and `NMSLoot/` are never touched.
+- Zone and model files from other clients that ours doesn't have (`stray` rules, such as a newer
+  `nektulos.eqg`, which the game loads instead of our `nektulos.s3d`) are moved to `VoidPatcher_backup/`.
+  Only the top folder is checked.
 - The patcher updates itself first when a newer one is published.
 - It runs on .NET Framework 4.8, which ships with Windows 10 and 11, so there is nothing else to install.
 - Everything it does is written to `VoidPatcher.log` next to the exe. Ask players for that file when
@@ -18,7 +21,8 @@ for a fresh install, and run it. It downloads whatever differs from the Voidforg
 |---|---|
 | `VoidPatcher/` | The patcher (C#, WinForms) |
 | `build_manifest.py` | Builds `manifest.txt` and the object store from a tested client folder |
-| `patch_rules.txt` | What gets shipped, excluded, or installed only when missing |
+| `patch_rules.txt` | What gets shipped, excluded, installed only when missing, or moved aside as a stray |
+| `publish_box.sh` | Uploads a publish folder to the patch host over ssh |
 
 ## How hosting works
 
@@ -33,8 +37,12 @@ Files are stored by content, so a changed file always gets a new URL and no CDN 
 copy. Unchanged files are never uploaded twice. The patcher fetches `manifest.txt` with a cache-busting
 query string.
 
-The patch server URL is built into the exe (`DefaultUrl` in `Program.cs`). A `VoidPatcher.ini` next to the
-exe can override it, which is handy for testing:
+The Docker setup serves them with the `patch` service in `docker/docker-compose.yml` (nginx, reading
+`PATCH_DIR`, on `PATCH_PORT`, default 8088).
+
+The patch server URL is built into the exe from `VoidPatcher/patch_url.txt`, one line such as
+`http://<host>:8088/`. That file is kept out of git; an exe built without it asks for a `VoidPatcher.ini`.
+A `VoidPatcher.ini` next to the exe overrides the URL, which is handy for testing:
 
 ```
 url=http://127.0.0.1:8088/
@@ -57,16 +65,26 @@ url=http://127.0.0.1:8088/
    - `--message` lines show at the top of the patcher window. You can pass it more than once.
 
 3. Upload `objects/` first and `manifest.txt` last, so players never get a list naming files the host
-   does not have yet. With rclone and a remote named `r2`:
+   does not have yet. `publish_box.sh` does that over ssh (from Git Bash on Windows) and only sends new
+   objects:
 
    ```
-   rclone copy  <publish folder>\objects     r2:voidforged-patch/objects --ignore-existing --transfers 16
-   rclone copyto <publish folder>\manifest.txt r2:voidforged-patch/manifest.txt
+   SSH_KEY=<key file> ./publish_box.sh <publish folder> <user>@<host> <PATCH_DIR>
    ```
 
 To retire a file the client used to ship, add `delete <path>` to `patch_rules.txt` and rebuild.
 
-## Cloudflare R2 setup (one time)
+The stray check trusts the reference client: a zone file missing from it gets moved aside on every
+player's PC. Keep the reference complete.
+
+## Cloudflare R2 setup (one time, instead of the box)
+
+To serve the files publicly, upload with rclone instead of `publish_box.sh`:
+
+```
+rclone copy  <publish folder>\objects     r2:voidforged-patch/objects --ignore-existing --transfers 16
+rclone copyto <publish folder>\manifest.txt r2:voidforged-patch/manifest.txt
+```
 
 R2 charges nothing for downloads, which is what matters for a 10 GB client. Storage beyond the free
 10 GB is about $0.015 per GB per month.
@@ -82,7 +100,7 @@ R2 charges nothing for downloads, which is what matters for a 10 GB client. Stor
    - new remote `r2`, storage type `s3`, provider `Cloudflare`;
    - paste the access key and secret;
    - endpoint is the URL from step 4.
-6. Put the public URL from step 3 into `DefaultUrl` in `Program.cs`, rebuild, and publish with `--patcher`.
+6. Put the public URL from step 3 into `VoidPatcher/patch_url.txt`, rebuild, and publish with `--patcher`.
 
 ## Building the patcher
 

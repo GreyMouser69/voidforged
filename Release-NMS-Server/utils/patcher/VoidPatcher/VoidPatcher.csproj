@@ -9,13 +9,18 @@
     <Nullable>disable</Nullable>
     <AssemblyName>VoidPatcher</AssemblyName>
     <RootNamespace>VoidPatcher</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <!-- The patch server URL lives in patch_url.txt, kept out of git; without it the exe needs a VoidPatcher.ini -->
+  <ItemGroup Condition="Exists('patch_url.txt')">
+    <EmbeddedResource Include="patch_url.txt" LogicalName="patch_url.txt" />
   </ItemGroup>
 
 </Project>

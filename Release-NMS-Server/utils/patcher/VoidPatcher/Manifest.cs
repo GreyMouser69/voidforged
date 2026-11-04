@@ -11,6 +11,7 @@ namespace VoidPatcher
 	//   F <tab> md5 <tab> size <tab> path   always kept matching the server copy
 	//   I <tab> md5 <tab> size <tab> path   installed only when missing (player settings files)
 	//   D <tab> path                        deleted when present
+	//   S <tab> glob                        game-folder files matching it that are not listed get moved aside
 	// Files are served by content at objects/<first two md5 chars>/<md5>, so a CDN never hands out a stale copy
 	class ManifestEntry
 	{
@@ -27,6 +28,7 @@ namespace VoidPatcher
 		public ManifestEntry Patcher;
 		public List<ManifestEntry> Files = new List<ManifestEntry>();
 		public List<string> Deletes = new List<string>();
+		public List<string> Strays = new List<string>();
 
 		public static string ObjectPath(string md5) => "objects/" + md5.Substring(0, 2) + "/" + md5;
 
@@ -66,6 +68,15 @@ namespace VoidPatcher
 					case "D":
 						Require(p, 2, lineNo);
 						m.Deletes.Add(CheckPath(p[1], lineNo));
+						break;
+					case "S":
+						Require(p, 2, lineNo);
+						// Top-level patterns only: the check never walks into subfolders
+						if (p[1].Length == 0 || p[1].Contains("/") || p[1].Contains("\\")) {
+							throw new InvalidDataException($"Bad pattern on patch list line {lineNo}.");
+						}
+
+						m.Strays.Add(p[1].ToLowerInvariant());
 						break;
 					default:
 						// Unknown keys are skipped so a newer manifest still works with an older patcher

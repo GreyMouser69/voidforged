@@ -19,7 +19,8 @@ Runs the game server (world, zone launcher, shared memory), the login server and
    ```
 5. `docker compose up -d`
 
-Open UDP 5998, 5999, 9000 and 7001-7030 to players. Keep the database closed: this compose file doesn't publish its port.
+Open UDP 5998, 5999, 9000 and 7001-7030 to players, and TCP `PATCH_PORT` (8088) for VoidPatcher downloads
+(`utils/patcher`). Keep the database closed: this compose file doesn't publish its port.
 
 ## Notes
 

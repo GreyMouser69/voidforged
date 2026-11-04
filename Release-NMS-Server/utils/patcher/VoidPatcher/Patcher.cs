@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -64,6 +65,8 @@ namespace VoidPatcher
 				}
 			}
 
+			MoveStrays();
+
 			var cache = new HashCache(Path.Combine(gameDir, "VoidPatcher.cache"));
 			if (!verifyAll) {
 				cache.Load();
@@ -88,6 +91,37 @@ namespace VoidPatcher
 
 			Status?.Invoke("Patching complete.");
 			return PatchResult.Patched;
+		}
+
+		// Zone and model files the Voidforged client doesn't have still win over the ones it does (a newer
+		// nektulos.eqg replaces the nektulos.s3d the server's map is built from), so move them out of the way
+		void MoveStrays()
+		{
+			if (Manifest.Strays.Count == 0) {
+				return;
+			}
+
+			var patterns = Manifest.Strays
+				.Select(g => new Regex("^" + Regex.Escape(g).Replace(@"\*", ".*").Replace(@"\?", ".") + "$", RegexOptions.IgnoreCase))
+				.ToList();
+			var known = new HashSet<string>(Manifest.Files.Select(e => e.Path), StringComparer.OrdinalIgnoreCase);
+			string backup = null;
+
+			foreach (var full in Directory.EnumerateFiles(gameDir)) {
+				var name = Path.GetFileName(full);
+				if (known.Contains(name) || !patterns.Any(r => r.IsMatch(name))) {
+					continue;
+				}
+
+				if (backup == null) {
+					backup = Path.Combine(gameDir, "VoidPatcher_backup", DateTime.Now.ToString("yyyy-MM-dd_HHmmss"));
+					Directory.CreateDirectory(backup);
+				}
+
+				File.SetAttributes(full, FileAttributes.Normal);
+				File.Move(full, Path.Combine(backup, name));
+				Log?.Invoke($"Moved {name} to {backup.Substring(gameDir.Length + 1)} (not part of the Voidforged client)");
+			}
 		}
 
 		async Task<List<ManifestEntry>> Scan(HashCache cache, CancellationToken ct)

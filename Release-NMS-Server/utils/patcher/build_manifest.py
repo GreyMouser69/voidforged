@@ -23,8 +23,10 @@ def load_rules(path):
         if not line or line.startswith('#'):
             continue
         kind, _, pattern = line.partition(' ')
-        if kind not in ('exclude', 'ifmissing', 'delete') or not pattern:
+        if kind not in ('exclude', 'ifmissing', 'delete', 'stray') or not pattern:
             sys.exit(f'{path}:{n}: bad rule: {line}')
+        if kind == 'stray' and '/' in pattern:
+            sys.exit(f'{path}:{n}: stray patterns cover the top folder only: {line}')
         rules.append((kind, pattern.strip().lower()))
     return rules
 
@@ -32,7 +34,7 @@ def load_rules(path):
 def match(rules, rel):
     low = rel.lower()
     for kind, pattern in rules:
-        if kind == 'delete':
+        if kind in ('delete', 'stray'):
             continue
         if fnmatch.fnmatchcase(low, pattern):
             return kind
@@ -132,6 +134,7 @@ def main():
             new_objects += 1
         lines.append(f'patcher\t{md5}\t{os.path.getsize(args.patcher)}')
     lines += [f'D\t{p}' for k, p in rules if k == 'delete']
+    lines += [f'S\t{p}' for k, p in rules if k == 'stray']
     lines += [f'{k}\t{m}\t{s}\t{p}' for k, m, s, p in sorted(entries, key=lambda e: e[3].lower())]
 
     tmp = os.path.join(out, 'manifest.txt.tmp')

@@ -5,7 +5,21 @@
 #   exclude <glob>     never shipped, and the patcher never touches it on a player's PC
 #   ifmissing <glob>   shipped for fresh installs only; a player's own copy is never overwritten
 #   delete <path>      removed from players' folders (for files we used to ship)
-# The first rule that matches a path wins.
+#   stray <glob>       top-folder files on a player's PC that match and aren't shipped get moved to VoidPatcher_backup/
+# The first exclude or ifmissing rule that matches a path wins.
+
+# Zone and model files from other clients. The game prefers a zone's .eqg over its .s3d, so a newer
+# nektulos.eqg (not in our client) drops players under the world the server's map was built for.
+stray *.eqg
+stray *.s3d
+stray *.zon
+stray *.emt
+stray *.xmi
+stray *.eff
+stray *_chr.txt
+stray *_chr2.txt
+stray *_assets.txt
+stray *_environmentemitters.txt
 
 # Player settings: give new installs a starting copy, never overwrite after that
 ifmissing eqclient.ini
@@ -19,6 +33,8 @@ exclude *_localeq.ini
 exclude *_multiclass.ini
 exclude *_eqdream.ini
 exclude ui_*.ini
+exclude *_voidforged.ini
+exclude *_vflinuxtest.ini
 exclude *_characters.ini
 exclude eqlsplayerdata.ini
 exclude eqlsclient.ini
@@ -47,6 +63,9 @@ exclude uifiles/default_borked/**
 exclude legendsofnorrath/**
 exclude redists/**
 exclude launchpad.*
+exclude imperiumpatcher.*
+exclude nmspatcher.exe
+exclude nmspatcher_cache.txt
 exclude launchpad.libs/**
 exclude uninstaller.*
 exclude testeqgame.exe
@@ -62,3 +81,4 @@ exclude folder.jpg
 
 # The patcher's own files; the patcher exe is shipped separately for self-update
 exclude voidpatcher.*
+exclude voidpatcher_backup/**

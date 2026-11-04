@@ -10,10 +10,16 @@ namespace VoidPatcher
 {
 	static class Program
 	{
-		public const string Version = "1.0.0";
+		public const string Version = "1.1.0";
 
-		// Where manifest.txt and objects/ live. VoidPatcher.ini next to the exe can override it (url=...)
-		const string DefaultUrl = "https://patch.voidforged.invalid/";
+		// Where manifest.txt and objects/ live: patch_url.txt, built into the exe. VoidPatcher.ini next to
+		// the exe can override it (url=...)
+		static string DefaultUrl()
+		{
+			using (var s = typeof(Program).Assembly.GetManifestResourceStream("patch_url.txt")) {
+				return s == null ? "" : new StreamReader(s).ReadToEnd().Trim();
+			}
+		}
 
 		static string logPath;
 		static readonly object logLock = new object();
@@ -27,7 +33,7 @@ namespace VoidPatcher
 			var gameDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
 			var settings = ReadSettings(Path.Combine(gameDir, "VoidPatcher.ini"));
 			if (!settings.TryGetValue("url", out var url) || url.Length == 0) {
-				url = DefaultUrl;
+				url = DefaultUrl();
 			}
 
 			logPath = Path.Combine(gameDir, "VoidPatcher.log");
@@ -35,6 +41,16 @@ namespace VoidPatcher
 				File.WriteAllText(logPath, "");
 			} catch {
 				logPath = null;
+			}
+
+			if (url.Length == 0) {
+				const string msg = "This patcher was built without a patch server address.";
+				WriteLog("ERROR: " + msg);
+				if (!args.Contains("--nogui")) {
+					MessageBox.Show(msg, "VoidPatcher");
+				}
+
+				return 1;
 			}
 
 			WriteLog($"VoidPatcher {Version} in {gameDir}, patch server {url}");
