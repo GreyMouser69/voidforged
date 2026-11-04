@@ -622,6 +622,23 @@ void NmsLootOfferOnCorpseOpen(Client *c, Corpse *corpse)
 	ResendExistingOffers(c, corpse);
 }
 
+static bool EmptiesCorpseFor(size_t recipients)
+{
+	return (recipients >= 2 && RuleB(Custom, NmsLootEmptyGroupCorpse)) ||
+		(recipients == 1 && RuleB(Custom, NmsLootEmptySoloCorpse));
+}
+
+// True when NmsLootOfferOnCorpseCreated will strip the corpse's loot-table items for this kill
+bool NmsLootOfferEmptiesCorpse(Client *credit)
+{
+	if (!credit || !NmsLootOffersEnabled() || !EnsureTables() || !zone) {
+		return false;
+	}
+	std::vector<Client *> recipients;
+	CollectPartyClientsInZone(credit, recipients);
+	return EmptiesCorpseFor(recipients.size());
+}
+
 void NmsLootOfferOnCorpseCreated(Corpse *corpse, Client *credit, NPC *source)
 {
 	if (!corpse || !credit || !source || !NmsLootOffersEnabled() || !EnsureTables() || !zone) {
@@ -672,10 +689,7 @@ void NmsLootOfferOnCorpseCreated(Corpse *corpse, Client *credit, NPC *source)
 
 	// With 2+ players rolling, the personal rolls replace the corpse loot; a lone player keeps both unless
 	// NmsLootEmptySoloCorpse is on. Quest/script-added items (lootdrop_id 0) stay on the corpse.
-	if (
-		(recipients.size() >= 2 && RuleB(Custom, NmsLootEmptyGroupCorpse)) ||
-		(recipients.size() == 1 && RuleB(Custom, NmsLootEmptySoloCorpse))
-	) {
+	if (EmptiesCorpseFor(recipients.size())) {
 		std::vector<LootItem *> table_items;
 		for (auto *item : corpse->GetLootItems()) {
 			if (item && item->lootdrop_id) {

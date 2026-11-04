@@ -2927,9 +2927,24 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 		entity_list.RemoveFromAutoXTargets(this);
 
 
+		// /nmsloot: personal loot rolls for the credited client and their group/raid in this zone
+		Client *nms_loot_credit = nullptr;
+		if (killer && killer->IsClient()) {
+			nms_loot_credit = killer->CastToClient();
+		} else if (killer_mob) {
+			Mob *ultimate_owner = killer_mob->GetUltimateOwner();
+			if (ultimate_owner && ultimate_owner->IsClient()) {
+				nms_loot_credit = ultimate_owner->CastToClient();
+			}
+		}
+
+		// When the personal rolls replace the corpse's loot-table items, those items are removed unseen, so
+		// upgrading and announcing them promised loot nobody got. The personal rolls get their own upgrade roll.
+		const bool nms_loot_empties_corpse = NmsLootOfferEmptiesCorpse(nms_loot_credit);
+
 		if (database.LootBuffEnabled()) {
 			for (LootItem* item : m_loot_items) {
-				if (item != nullptr) {
+				if (item != nullptr && !(nms_loot_empties_corpse && item->lootdrop_id)) {
 					auto old_id = item->item_id;
 					item->item_id = DoUpgradeLoot(item->item_id);
 
@@ -3187,16 +3202,6 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 			}
 		}
 
-		// /nmsloot: personal loot rolls for the credited client and their group/raid in this zone
-		Client *nms_loot_credit = nullptr;
-		if (killer && killer->IsClient()) {
-			nms_loot_credit = killer->CastToClient();
-		} else if (killer_mob) {
-			Mob *ultimate_owner = killer_mob->GetUltimateOwner();
-			if (ultimate_owner && ultimate_owner->IsClient()) {
-				nms_loot_credit = ultimate_owner->CastToClient();
-			}
-		}
 		NmsLootOfferOnCorpseCreated(corpse, nms_loot_credit, this);
 
 		if (zone && zone->adv_data) {
