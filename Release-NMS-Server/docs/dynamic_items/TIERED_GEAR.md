@@ -5,13 +5,13 @@ Everything sold is No Trade. Dynamic (rolled) pieces use the existing class pool
 
 ## Unlocks
 
-| Gear tier | Armor | Non-visible | Augments | Stat multiplier | Name prefix |
-|---|---|---|---|---|---|
-| 1 | T1 | T25 | T75 | 1.0x | (current names) |
-| 2 | T100 | T125 | T175 | 1.5x | Tempered |
-| 3 | T200 | T225 | T275 | 2.0x | Exalted |
-| 4 | T300 | T325 | T375 | 2.5x | Eternal |
-| 5 | T400 | T425 | T475 | 3.0x | Timeless |
+| Gear tier | Armor | Non-visible | Augments | Weapons | Stat multiplier | Name prefix |
+|---|---|---|---|---|---|---|
+| 1 | T1 | T25 | T50 | T75 | 1.0x | (current names) |
+| 2 | T100 | T125 | T150 | T175 | 1.5x | Tempered |
+| 3 | T200 | T225 | T250 | T275 | 2.0x | Exalted |
+| 4 | T300 | T325 | T350 | T375 | 2.5x | Eternal |
+| 5 | T400 | T425 | T450 | T475 | 3.0x | Timeless |
 
 - Gate: merchantlist `bucket_name` / `bucket_value` / `bucket_comparison = 2` (>=) on a character-scoped
   data bucket holding the deepest clear. Locked items are hidden. The rift scripts write the bucket on a
@@ -71,24 +71,48 @@ Sympathetic procs fire on casting detrimental damage spells; a beneficial trigge
 
 ## Augments
 
-Fixed stats, no class restriction, No Trade, aug type 1 or 2 (the set pieces' general slots). Six per
-tier, stats x tier multiplier, focus from existing item focus spells:
+One all-stat Facet per tier, so any class can wear it: fixed stats, no class restriction, No Trade, aug types 1, 2
+and 4, every slot. Each tier sells it as Facet I and Facet II, with identical stats under two item ids, because one
+item can't hold the same augment twice. Names: Chronal, Tempered, Exalted, Eternal and Timeless Facet I and II.
+No focus effects. Stats are the tier 1 values below times the tier multiplier (changed 2026-11-03 from six themed
+augments per tier; nobody owned the old ones).
 
-| Augment | Stats | Focus |
-|---|---|---|
-| Bulwark | HP, AC, heroic STA, resists | none |
-| Ferocity | Attack, STR/DEX, heroic STR/DEX | none, or a melee worn effect |
-| Arcana | Spell Damage, INT, mana | Improved Damage |
-| Mending | Heal Amount, WIS, mana | Improved Healing |
-| Alacrity | Mana, INT/WIS | spell haste |
-| Valor | HP, Attack, Heal Amount | Mana Preservation |
+| Stat | Tier 1 |
+|---|---|
+| AC | 15 |
+| HP, Mana, Endurance | 150 each |
+| STR, STA, AGI, DEX, WIS, INT, CHA | 10 each |
+| Magic, Fire, Cold, Disease, Poison resist | 10 each |
+| Heroic STR, STA, DEX | 4 each |
+| Attack, Spell Damage, Heal Amount | 15 each |
+
+## Weapons (added 2026-11-03)
+
+The 30 Legendary Plane of Time weapons and shields (Darkblade of the Warlord, Greatstaff of Power, Bow of the
+Tempest, Shield of Strife and the rest), copied per tier: tier 1 has the Legendary stats, and each tier multiplies
+damage and every stat by the tier multiplier (Darkblade: 76 damage and 450 HP at tier 1, 228 and 1,350 at tier 5).
+Delay, procs, focus and click effects and aug slots stay as the source. Names: tier prefix + source name
+(Chronal Darkblade of the Warlord ... Timeless Darkblade of the Warlord). No Trade. A tier's weapons unlock 75 past
+its armor, the slot that was left open for a new vendor type. Two stats-only range items come with them: Stone of
+Flowing Time (melee) and Spool of Woven Time (casters).
+
+Each weapon also rolls affixes from the class pools, on top of its fixed stats. The pools are per class, so each
+weapon is copied once per class the source allows (item = block 2000 + index * 20 + class), and the vendor shows a
+player only their own class's copies: 6 to 14 weapons per class per tier, 143 per tier in all. Roll strength
+(`dynamic_items.stat_multiplier`) is two-handers 1.2 (double a one-hander, as they fill both hands), other weapons and
+shields 0.6, range items 0.5, times the
+tier multiplier.
+
+Tabled (2026-11-03): procs don't scale, so every tier procs the Legendary's spell at its rate. Scaling them needs
+new proc spells per tier (in the client spell file too); revisit when players reach the deeper weapon tiers.
 
 ## Vendors
 
-Three per tier in thevoida (15), one line from (-89.84, -30.07) to (-107.79, 49.33) in tier order, each
-titled "Tier N Armor / Jewelry / Augments". Tier 1 armor is the existing Chronal Quartermaster; the others
-are <prefix>_Armorer (Clockwork Golem), <prefix>_Jeweler (Clockwork Gnome) and <prefix>_Augmenter (Junk
-Golem), prefix Chronal for tier 1.
+Four per tier in thevoida (20), hand placed in a short line per tier, each titled "Tier N Armor / Jewelry /
+Augments / Weapons". Tier 1 armor is the existing Chronal Quartermaster; the others are <prefix>_Armorer
+(Clockwork Golem), <prefix>_Jeweler (Clockwork Gnome), <prefix>_Augmenter (Junk Golem) and
+<prefix>_Weaponsmith (Clockwork Golem), prefix Chronal for tier 1. The Weaponsmiths stand one step past each
+tier's Augmenter, a guessed spot to move in game.
 
 ## Prices (Chronal Shards, sell-back 20%)
 
@@ -97,14 +121,19 @@ Golem), prefix Chronal for tier 1.
 | Armor | 25 | 50 | 100 | 200 | 400 |
 | Non-visible | 15 | 30 | 60 | 120 | 240 |
 | Augments | 40 | 80 | 160 | 320 | 640 |
+| Weapons | 30 | 60 | 120 | 240 | 480 |
 
 ## Build
 
-- Data: `utils/scripts/dynamic_items/gen_tier_gear.py <eqemu_config.json> class_sets.json tier_gear.json <out.sql>`
-  (output committed as `2026_10_23_tier_gear.sql`). It rebuilds its own id ranges on every run:
-  items 940000-964999 (item = 940000 + (tier - 1) * 5000 + block + class; augments block 1800),
-  armor sets tier * 100 + class, non-visible sets 1000 + tier * 100 + class, spells 44001-44029,
-  vendor npcs 1200030-1200043 (spawngroups named `rift_tier_vendor_<npc id>`).
+- Data: `utils/scripts/dynamic_items/gen_tier_gear.py <eqemu_config.json | box:user@host[,key]> class_sets.json
+  tier_gear.json <out.sql>` (output committed as `2026_10_23_tier_gear.sql`; `box:` reads the schema from the
+  Docker server over SSH). It rebuilds its own id ranges on every run:
+  items 940000-964999 (item = 940000 + (tier - 1) * 5000 + block + class; augments block 1800, weapons block
+  2000), raid augments 965000-965399, armor sets tier * 100 + class, non-visible sets 1000 + tier * 100 + class,
+  spells 44001-44029, vendor npcs 1200030-1200043, Weaponsmiths 1200044-1200048 and the Prism_Augmenter 1200072
+  (spawngroups named `rift_tier_vendor_<npc id>`).
+- The weapons and the raid augment vendor went live as `utils/scripts/rift/sql/2026_11_03_03_tier_weapons_raid_augments.sql`,
+  only the new rows cut from the generator's output, so the rest of the live tier gear was left alone.
 - New items and spells load into shared memory at server start, so they appear after a restart.
 - Unlock bucket: `rift_core.lua` writes the character bucket `rift_deepest` on each new deepest clear;
   `utils/scripts/rift/sql/2026_10_23_03_rift_deepest_bucket.sql` copied existing values once.

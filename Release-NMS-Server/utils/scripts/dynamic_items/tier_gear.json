@@ -9,7 +9,7 @@
     {"tier": 5, "prefix": "Timeless", "mult": 3.0, "unlock": 400}
   ],
   "nonvis_unlock_offset": 25,
-  "augment_unlock_offset": 75,
+  "augment_unlock_offset": 50,
   "unlock_bucket": "rift_deepest",
 
   "_ids": "item = item_base + (tier - 1) * tier_item_step + block + class (tier 1 armor keeps class_sets.json ids); armor set = tier * 100 + class (tier 1 = 101-116); non-visible set = 1000 + tier * 100 + class; spells from spell_id_base",
@@ -119,17 +119,52 @@
     "16": {"three": {"frenzy_dmg_pct": 4, "skill_2hs_pct": 3, "skill_2hb_pct": 3},           "worn": "ferocity",    "proc": "burst_ice",      "proc_type": "proc"}
   },
 
-  "_augments": "Fixed stats at tier 1 (x tier mult, rounded), all classes, No Trade, aug types 1 and 2. focus is the same at every tier: higher ranks of these families add nothing at level 70.",
+  "_augments": "Fixed stats at tier 1 (x tier mult, rounded), all classes, No Trade, aug types 1, 2 and 4 (augment_type is the bitmask). One all-stat Facet per tier, sold as I and II: identical stats under two item ids, because one item can't hold the same augment twice. Tier 1 takes the vendors' tier1_prefix (Chronal).",
   "augment_block": 1800,
   "augment_slots": 2097151,
+  "augment_type": 11,
   "augments": [
-    {"name": "Bulwark Shard",  "icon": 3880, "stats": {"hp": 150, "ac": 15, "heroic_sta": 5, "mr": 10, "fr": 10, "cr": 10, "dr": 10, "pr": 10}},
-    {"name": "Ferocity Shard", "icon": 3877, "stats": {"attack": 15, "astr": 10, "adex": 10, "heroic_str": 4, "heroic_dex": 4}},
-    {"name": "Arcana Shard",   "icon": 3876, "stats": {"spelldmg": 20, "aint": 10, "mana": 150}, "focus": 6414},
-    {"name": "Mending Shard",  "icon": 2098, "stats": {"healamt": 20, "awis": 10, "mana": 150}, "focus": 6410},
-    {"name": "Alacrity Shard", "icon": 2096, "stats": {"mana": 200, "aint": 8, "awis": 8},     "focus": 6415},
-    {"name": "Valor Shard",    "icon": 2098, "stats": {"hp": 100, "attack": 10, "healamt": 10}, "focus": 13904}
+    {"name": "Facet I",  "icon": 3880, "stats": {"ac": 15, "hp": 150, "mana": 150, "endur": 150,
+      "astr": 10, "asta": 10, "aagi": 10, "adex": 10, "awis": 10, "aint": 10, "acha": 10,
+      "mr": 10, "fr": 10, "cr": 10, "dr": 10, "pr": 10, "heroic_str": 4, "heroic_sta": 4, "heroic_dex": 4,
+      "attack": 15, "spelldmg": 15, "healamt": 15}},
+    {"name": "Facet II", "icon": 3876, "stats": {"ac": 15, "hp": 150, "mana": 150, "endur": 150,
+      "astr": 10, "asta": 10, "aagi": 10, "adex": 10, "awis": 10, "aint": 10, "acha": 10,
+      "mr": 10, "fr": 10, "cr": 10, "dr": 10, "pr": 10, "heroic_str": 4, "heroic_sta": 4, "heroic_dex": 4,
+      "attack": 15, "spelldmg": 15, "healamt": 15}}
   ],
+
+  "_weapons": "Tier 1 is a copy of each Legendary Plane of Time weapon or shield, plus two stats-only range items (Stone of Flowing Time for melee, Spool of Woven Time for casters) (source item ids); each tier scales scale_columns by its mult, rounded. Name = tier prefix (tier1_prefix at tier 1) + source name without ' (Legendary)'. Procs, delay, focus and clicks are kept (procs don't scale: tabled); No Trade. One copy per class the source allows (item = weapon_block + index * 20 + class), because the affix roll pools are per class: each copy also rolls that class's affixes (class_sets.json min/max) at weapon_roll_multiplier (by kind) x tier mult, on top of the fixed stats. Sold by a Weaponsmith per tier (its own npc ids) at a deepest clear of tier unlock + weapon_unlock_offset; each class sees its own copies.",
+  "weapon_block": 2000,
+  "weapon_roll_multiplier": {"two_hand": 1.2, "other": 0.6, "range": 0.5},
+  "weapon_unlock_offset": 75,
+  "weapons": [2022999, 2022986, 2023498, 2024570, 2024573, 2026092, 2068199, 2024776, 2024692, 2024699,
+              2022890, 2022883, 2022998, 2020627, 2021886, 2022894, 2022959, 2015867, 2021876, 2024793,
+              2024999, 2029172, 2027818, 2027274, 2028657, 2027298, 2025998, 2028656, 2027280, 2026740, 2026987, 2020496],
+  "scale_columns": ["damage", "ac", "hp", "mana", "endur", "astr", "asta", "aagi", "adex", "awis", "aint", "acha",
+                    "mr", "fr", "cr", "dr", "pr", "svcorruption", "attack", "spelldmg", "healamt", "regen", "manaregen",
+                    "enduranceregen", "heroic_str", "heroic_sta", "heroic_agi", "heroic_dex", "heroic_wis", "heroic_int",
+                    "heroic_cha", "heroic_mr", "heroic_fr", "heroic_cr", "heroic_dr", "heroic_pr", "heroic_svcorrup",
+                    "shielding", "spellshield", "strikethrough", "stunresist", "avoidance", "accuracy", "combateffects",
+                    "dotshielding", "damageshield", "dsmitigation", "elemdmgamt", "banedmgamt", "backstabdmg"],
+
+  "_raid_augments": "Raid augment vendor beside the Raid Portal, paid in Chronal Prisms (alt currency 3). Each raid tier sells every source augment (Legendary Prismatic Scales from Kerafyrm, Legendary Splinters of Time from Zebuxoruk) with scale_columns x the mult of gear tier (raid tier + 1), named with that tier's prefix. Item id = item_base + raid tier * 100 + index. Unlocked by the character-scoped bucket raid_cleared (highest raid tier cleared, set by plugins/raid_portal.pl).",
+  "raid_augments": {
+    "item_base": 964900,
+    "sources": [2018375, 2018376, 2024130, 2017847, 2018374, 2017846, 2018639, 2018377, 2009604, 2009601,
+                2001801, 2009602, 2009605, 2009612, 2001802, 2009610, 2009607, 2009603, 2009611, 2009609,
+                2009600, 2009608, 2017730, 2009606, 2019053, 2017733, 2017732, 2017845],
+    "raid_tiers": 4,
+    "cost": [6, 12, 24, 48],
+    "unlock_bucket": "raid_cleared",
+    "npc_id": 1200072,
+    "name": "Prism_Augmenter",
+    "title": "Raid Augments",
+    "race": 273,
+    "size": 6,
+    "alt_currency": 3,
+    "position": [38.94, -55.30, 0.53, 10.5]
+  },
 
   "vendors": {
     "_doc": "Three per tier. Tier 1 armor stays the Chronal Quartermaster (class_sets.json vendor). npc ids from npc_id_base, copied from copy_npc. Positions are offsets from anchor.",
@@ -142,9 +177,9 @@
     "face_hint": 96,
     "_placed": "vendors placed by hand instead of on the line: \"tier:kind\" -> [x, y, z, heading]",
     "placed": {
-      "1:armor": [80.52, 50.86, 4.33, 358.25],
-      "1:nonvis": [77.41, 60.36, 4.33, 358.25],
-      "1:augments": [83.63, 41.36, 4.33, 358.25],
+      "1:armor": [79.36, 62.05, 4.33, 338.0],
+      "1:nonvis": [74.01, 70.49, 4.33, 338.0],
+      "1:augments": [84.71, 53.60, 4.33, 338.0],
       "2:armor": [31.57, 104.61, 6.97, 301.0],
       "2:nonvis": [23.06, 109.86, 6.97, 301.0],
       "2:augments": [40.08, 99.36, 6.97, 301.0],
@@ -156,13 +191,21 @@
       "4:augments": [-102.82, 41.81, 9.64, 145.25],
       "5:armor": [-96.93, -13.57, 9.64, 102.0],
       "5:nonvis": [-93.79, -23.07, 9.64, 102.0],
-      "5:augments": [-100.07, -4.07, 9.64, 102.0]
+      "5:augments": [-100.07, -4.07, 9.64, 102.0],
+      "1:weapons": [90.05, 45.16, 4.33, 338.0],
+      "2:weapons": [48.59, 94.11, 6.97, 301.0],
+      "3:weapons": [-42.57, 116.50, 4.85, 207.75],
+      "4:weapons": [-100.72, 51.59, 9.64, 145.25],
+      "5:weapons": [-103.21, 5.43, 9.64, 102.0]
     },
     "quartermaster_npc": 1200010,
+    "_kinds": "weapons was added after the first three kinds, so it takes its own npc ids (npc_id_base + tier - 1) rather than shifting theirs",
     "kinds": {
       "armor":    {"name": "Armorer",   "title": "Armor",    "race": 248, "size": 6, "cost": [25, 50, 100, 200, 400]},
       "nonvis":   {"name": "Jeweler",   "title": "Jewelry",  "race": 88,  "size": 5, "cost": [15, 30, 60, 120, 240]},
-      "augments": {"name": "Augmenter", "title": "Augments", "race": 273, "size": 6, "cost": [40, 80, 160, 320, 640]}
+      "augments": {"name": "Augmenter", "title": "Augments", "race": 273, "size": 6, "cost": [40, 80, 160, 320, 640]},
+      "weapons":  {"name": "Weaponsmith", "title": "Weapons", "race": 248, "size": 6, "cost": [30, 60, 120, 240, 480],
+                   "npc_id_base": 1200044}
     },
     "tier1_prefix": "Chronal"
   }

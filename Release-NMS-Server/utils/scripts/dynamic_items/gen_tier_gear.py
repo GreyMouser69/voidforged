@@ -2,22 +2,32 @@
 # augments for tiers 1-5, their sets and bonuses, custom server-side spells, and the tier vendors.
 #
 #   python gen_tier_gear.py <eqemu_config.json> <class_sets.json> <tier_gear.json> <out.sql>
+#   python gen_tier_gear.py box:<user@host>[,<ssh key file>] <class_sets.json> <tier_gear.json> <out.sql>
 #
+# box: reads the schema from a server running from docker/ (in ~/voidforged/src/docker) over SSH.
 # Tier 1 armor and its vendor (the Chronal Quartermaster) stay with gen_class_sets.py. Everything here is
 # rebuilt from scratch on each run: the SQL deletes its own id ranges first.
 import json, math, os, subprocess, sys
 
-cfg = json.load(open(sys.argv[1]))['server']['database']
 cs  = json.load(open(sys.argv[2]))
 tg  = json.load(open(sys.argv[3]))
 out_path = sys.argv[4]
-env = dict(os.environ, MYSQL_PWD=cfg['password'])
-mysql = os.environ.get('MYSQL_EXE', r'C:\Program Files\MariaDB 12.3\bin\mysql.exe')
+
+if sys.argv[1].startswith('box:'):
+    host, _, identity = sys.argv[1][4:].partition(',')
+    db_cmd = ['ssh', '-o', 'BatchMode=yes'] + (['-i', identity] if identity else []) + [host,
+              'cd voidforged/src/docker && docker compose exec -T db sh -c '
+              '\'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" -N -B "$MARIADB_DATABASE"\'']
+    env = None
+else:
+    cfg = json.load(open(sys.argv[1]))['server']['database']
+    db_cmd = [os.environ.get('MYSQL_EXE', r'C:\Program Files\MariaDB 12.3\bin\mysql.exe'), '-h', cfg['host'],
+              '-P', str(cfg['port']), '-u', cfg['username'], cfg['db'], '-N', '-B']
+    env = dict(os.environ, MYSQL_PWD=cfg['password'])
 
 
 def query(sql):
-    out = subprocess.run([mysql, '-h', cfg['host'], '-P', str(cfg['port']), '-u', cfg['username'], cfg['db'],
-                          '-N', '-B', '-e', sql], env=env, capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(db_cmd, input=sql, env=env, capture_output=True, text=True, check=True).stdout
     return [line.split('\t') for line in out.splitlines()]
 
 
@@ -66,22 +76,29 @@ spell_ids.update({s['key']: s['id'] for s in tg['custom_spells'] if 'id' in s})
 lo_spell, hi_spell = tg['spell_id_base'], tg['spell_id_base'] + len(numbered) - 1
 fixed_spells = ', '.join(str(s['id']) for s in tg['custom_spells'] if 'id' in s) or '0'
 v = tg['vendors']
+ra = tg['raid_augments']
 lo_npc, hi_npc = v['npc_id_base'], v['npc_id_base'] + 3 * len(tiers) - 1
+# Kinds added later carry their own npc_id_base, so the first three kinds keep their ids
+extra_npcs = [k['npc_id_base'] + t['tier'] - 1 for k in v['kinds'].values() if 'npc_id_base' in k for t in tiers]
+extra_npcs.append(ra['npc_id'])
+npc_filter = f"npcID BETWEEN {lo_npc} AND {hi_npc} OR npcID IN ({', '.join(str(n) for n in extra_npcs)})"
+lo_raid_item, hi_raid_item = ra['item_base'] + 100, ra['item_base'] + 100 * ra['raid_tiers'] + 99
 
 armor_sets  = [t['tier'] * 100 + c for t in tiers if t['tier'] > 1 for c, _ in classes]
 nonvis_sets = [tg['nonvis_set_base'] + t['tier'] * 100 + c for t in tiers for c, _ in classes]
 all_sets = ', '.join(str(s) for s in armor_sets + nonvis_sets)
 
 sql += [
-    f'DELETE FROM merchantlist WHERE merchantid BETWEEN {lo_npc} AND {hi_npc};',
-    f'DELETE FROM spawn2 WHERE spawngroupID IN (SELECT spawngroupID FROM spawnentry WHERE npcID BETWEEN {lo_npc} AND {hi_npc});',
+    f'DELETE FROM merchantlist WHERE {npc_filter.replace("npcID", "merchantid")};',
+    f'DELETE FROM spawn2 WHERE spawngroupID IN (SELECT spawngroupID FROM spawnentry WHERE {npc_filter});',
     f"DELETE FROM spawngroup WHERE name LIKE 'rift\\_tier\\_vendor\\_%';",
-    f'DELETE FROM spawnentry WHERE npcID BETWEEN {lo_npc} AND {hi_npc};',
-    f'DELETE FROM npc_types WHERE id BETWEEN {lo_npc} AND {hi_npc};',
+    f'DELETE FROM spawnentry WHERE {npc_filter};',
+    f'DELETE FROM npc_types WHERE {npc_filter.replace("npcID", "id")};',
     f'DELETE FROM armor_set_bonuses WHERE set_id IN ({all_sets});',
     f'DELETE FROM armor_set_items WHERE item_id BETWEEN {lo_item} AND {hi_item};',
     f'DELETE FROM dynamic_items WHERE item_id BETWEEN {lo_item} AND {hi_item};',
     f'DELETE FROM items WHERE id BETWEEN {lo_item} AND {hi_item};',
+    f'DELETE FROM items WHERE id BETWEEN {lo_raid_item} AND {hi_raid_item};',
     f'DELETE FROM spells_new WHERE id BETWEEN {lo_spell} AND {hi_spell};',
     f'DELETE FROM spells_new WHERE id IN ({fixed_spells});',
     '',
@@ -177,13 +194,13 @@ for t in tiers:
                            2 if nb['proc_type'] == 'proc' else 3))
 sql.append('')
 
-sql.append('-- Augments, gear tiers 1-5 (fixed stats, all classes, No Trade, aug types 1 and 2)')
+sql.append('-- Augments, gear tiers 1-5 (fixed stats, all classes, No Trade)')
 for t in tiers:
     vendor_items[('augments', t['tier'])] = []
     for n, a in enumerate(tg['augments']):
         iid = tier_item_id(t['tier'], tg['augment_block'] + n)
-        name = name_of(t['prefix'], a['name'])
-        over = {'id': str(iid), 'Name': quote(name), 'lore': quote(name), 'itemtype': '54', 'augtype': '3',
+        name = name_of(t['prefix'] or v['tier1_prefix'], a['name'])
+        over = {'id': str(iid), 'Name': quote(name), 'lore': quote(name), 'itemtype': '54', 'augtype': str(tg['augment_type']),
                 'slots': str(tg['augment_slots']), 'classes': '65535', 'races': '65535', 'icon': str(a['icon']),
                 'price': '0'}
         for i in range(1, 7):
@@ -198,6 +215,55 @@ for t in tiers:
             over['focustype'] = '6'
         sql.append(copy_row('items', item_cols, tg['nonvis_look_shell'], over))
         vendor_items[('augments', t['tier'])].append((iid, 65535))  # merchantlist classes_required: all classes
+sql.append('')
+
+for c in tg['scale_columns']:
+    if c not in item_cols:
+        sys.exit(f'unknown items column {c}')
+
+
+def scaled_copy(source_id, iid, prefix, mult, extra=None):
+    """Copy of a Legendary item: tier prefix in place of the ' (Legendary)' suffix, stats x mult (as scaled()), No Trade."""
+    name = f"CONCAT({quote(prefix + ' ')}, REPLACE(`Name`, ' (Legendary)', ''))"
+    over = {'id': str(iid), 'Name': name, 'lore': name, 'nodrop': '0', 'price': '0'}
+    for c in tg['scale_columns']:
+        over[c] = f'IF(`{c}` > 0, GREATEST(1, ROUND(`{c}` * {mult})), ROUND(`{c}` * {mult}))'
+    over.update(extra or {})
+    return copy_row('items', item_cols, source_id, over)
+
+
+TWO_HAND_TYPES = {1, 4, 35}  # 2H slashing, blunt, piercing
+weapon_src = {int(r[0]): (int(r[1]), int(r[2]), int(r[3])) for r in query(
+    f"SELECT id, classes, itemtype, slots FROM items WHERE id IN ({', '.join(str(s) for s in tg['weapons'])})")}
+missing = [s for s in tg['weapons'] if s not in weapon_src]
+if missing:
+    sys.exit(f'weapon sources not in items: {missing}')
+
+sql.append('-- Weapons and shields, gear tiers 1-5 (copies of the Legendary Plane of Time weapons, one per class)')
+for t in tiers:
+    vendor_items[('weapons', t['tier'])] = []
+    for n, src in enumerate(tg['weapons']):
+        src_classes, itemtype, slots = weapon_src[src]
+        kind = 'two_hand' if itemtype in TWO_HAND_TYPES else 'range' if slots == 2048 else 'other'
+        roll = round(tg['weapon_roll_multiplier'][kind] * t['mult'], 4)
+        for cid, _ in classes:
+            if not src_classes & (1 << (cid - 1)):
+                continue
+            iid = tier_item_id(t['tier'], tg['weapon_block'] + n * 20, cid)
+            sql.append(scaled_copy(src, iid, t['prefix'] or v['tier1_prefix'], t['mult'], {'classes': str(1 << (cid - 1))}))
+            dynamic_rows.append((iid, cid, t['tier'], roll, 'Tier weapon'))
+            vendor_items[('weapons', t['tier'])].append((iid, 1 << (cid - 1)))
+sql.append('')
+
+sql.append('-- Raid augments, raid tiers 1-4 (copies of the Legendary Prismatic Scales and Splinters of Time)')
+raid_items = {}
+for rt in range(1, ra['raid_tiers'] + 1):
+    gear = tiers[rt]  # raid tier N sits at gear tier N + 1
+    raid_items[rt] = []
+    for n, src in enumerate(ra['sources']):
+        iid = ra['item_base'] + rt * 100 + n
+        sql.append(scaled_copy(src, iid, gear['prefix'], gear['mult']))
+        raid_items[rt].append(iid)
 sql.append('')
 
 sql.append('INSERT INTO dynamic_items (item_id, class_id, tier, min_affixes, max_affixes, stat_multiplier, notes) VALUES')
@@ -249,8 +315,11 @@ for t in tiers:
     for kind, k in v['kinds'].items():
         if kind == 'armor' and t['tier'] == 1:
             continue
-        nid = npc_id
-        npc_id += 1
+        if 'npc_id_base' in k:
+            nid = k['npc_id_base'] + t['tier'] - 1
+        else:
+            nid = npc_id
+            npc_id += 1
         name = f"{prefix}_{k['name']}"
         sql.append(copy_row('npc_types', npc_cols, v['copy_npc'], {
             'id': str(nid), 'name': quote(name), 'lastname': quote(f"Tier {t['tier']} {k['title']}"),
@@ -262,7 +331,8 @@ for t in tiers:
                    f"SELECT id, '{v['zone']}', 0, {x:.2f}, {y:.2f}, {z}, {h}, 60, 0 FROM spawngroup "
                    f"WHERE name = 'rift_tier_vendor_{nid}';")
 
-        unlock = t['unlock'] + {'armor': 0, 'nonvis': tg['nonvis_unlock_offset'], 'augments': tg['augment_unlock_offset']}[kind]
+        unlock = t['unlock'] + {'armor': 0, 'nonvis': tg['nonvis_unlock_offset'], 'augments': tg['augment_unlock_offset'],
+                                'weapons': tg['weapon_unlock_offset']}[kind]
         cost = k['cost'][t['tier'] - 1]
         rows = []
         for slot, (iid, class_bits) in enumerate(vendor_items[(kind, t['tier'])], start=1):
@@ -270,8 +340,28 @@ for t in tiers:
         sql.append('INSERT INTO merchantlist (merchantid, slot, item, alt_currency_cost, classes_required, '
                    'bucket_name, bucket_value, bucket_comparison) VALUES')
         sql.append(',\n'.join(rows) + ';')
+
+# Raid augment vendor beside the Raid Portal: Chronal Prisms, each raid tier unlocked by raid_cleared
+nid = ra['npc_id']
+sql.append(f"DELETE FROM zone_state_spawns WHERE npc_id = {nid};")
+sql.append(copy_row('npc_types', npc_cols, v['copy_npc'], {
+    'id': str(nid), 'name': quote(ra['name']), 'lastname': quote(ra['title']), 'race': str(ra['race']),
+    'size': str(ra['size']), 'merchant_id': str(nid), 'alt_currency_id': str(ra['alt_currency'])}))
+sql.append(f"INSERT INTO spawngroup (name, spawn_limit) VALUES ('rift_tier_vendor_{nid}', 0);")
+sql.append(f'INSERT INTO spawnentry (spawngroupID, npcID, chance) VALUES (LAST_INSERT_ID(), {nid}, 100);')
+x, y, z, h = ra['position']
+sql.append(f"INSERT INTO spawn2 (spawngroupID, zone, version, x, y, z, heading, respawntime, variance) "
+           f"SELECT id, '{v['zone']}', 0, {x:.2f}, {y:.2f}, {z}, {h}, 60, 0 FROM spawngroup WHERE name = 'rift_tier_vendor_{nid}';")
+rows = [f"({nid}, {slot}, {iid}, {ra['cost'][rt - 1]}, 65535, '{ra['unlock_bucket']}', '{rt}', 2)"
+        for slot, (rt, iid) in enumerate(((rt, iid) for rt in raid_items for iid in raid_items[rt]), start=1)]
+sql.append('INSERT INTO merchantlist (merchantid, slot, item, alt_currency_cost, classes_required, '
+           'bucket_name, bucket_value, bucket_comparison) VALUES')
+sql.append(',\n'.join(rows) + ';')
 sql += ['', 'COMMIT;']
 
 open(out_path, 'w', newline='\n').write('\n'.join(sql) + '\n')
 print(f'{len(dynamic_rows)} dynamic items, {sum(len(x) for k, x in vendor_items.items() if k[0] == "augments")} augments, '
-      f'{len(bonus_rows)} set bonus rows, {len(tg["custom_spells"])} spells, {npc_id - v["npc_id_base"]} vendors -> {out_path}')
+      f'{sum(len(x) for k, x in vendor_items.items() if k[0] == "weapons")} weapons, '
+      f'{sum(len(x) for x in raid_items.values())} raid augments, '
+      f'{len(bonus_rows)} set bonus rows, {len(tg["custom_spells"])} spells, '
+      f'{npc_id - v["npc_id_base"] + len(extra_npcs)} vendors -> {out_path}')
