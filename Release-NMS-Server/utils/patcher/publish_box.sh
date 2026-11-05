@@ -31,7 +31,8 @@ comm -23 "$tmp/local" "$tmp/remote" > "$tmp/missing"
 
 count=$(wc -l < "$tmp/missing")
 if [ "$count" -gt 0 ]; then
-	bytes=$(cd "$pub/objects" && tr '\n' '\0' < "$tmp/missing" | xargs -0 du -cb | tail -1 | cut -f1)
+	# xargs can split the list over several du runs, so add the sizes up instead of taking du's total
+	bytes=$(cd "$pub/objects" && tr '\n' '\0' < "$tmp/missing" | xargs -0 du -b | awk '{s += $1} END {print s + 0}')
 	echo "uploading $count object(s), $((bytes / 1048576)) MB"
 	tar -C "$pub/objects" -cf - -T "$tmp/missing" | "${ssh_cmd[@]}" "$host" "tar -C '$dir/objects' -xf -"
 else
