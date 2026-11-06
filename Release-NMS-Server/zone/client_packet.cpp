@@ -439,6 +439,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_UnderWorld] = &Client::Handle_OP_UnderWorld;
 	ConnectedOpcodes[OP_WaypointRequest] = &Client::Handle_OP_WaypointRequest;
 	ConnectedOpcodes[OP_NmsLootDecision] = &Client::Handle_OP_NmsLootDecision;
+	ConnectedOpcodes[OP_PersonalLootAction] = &Client::Handle_OP_PersonalLootAction;
 
 	// shared tasks
 	ConnectedOpcodes[OP_SharedTaskRemovePlayer]   = &Client::Handle_OP_SharedTaskRemovePlayer;
@@ -17311,6 +17312,11 @@ void Client::Handle_OP_EvolveItem(const EQApplicationPacket *app)
 void Client::Handle_OP_NmsLootDecision(const EQApplicationPacket *app)
 {
 	NmsLootOfferHandleDecision(this, app);
+}
+
+void Client::Handle_OP_PersonalLootAction(const EQApplicationPacket *app)
+{
+	NmsLootOfferHandlePersonalLootAction(this, app);
 }
 
 void Client::Handle_OP_WaypointRequest(const EQApplicationPacket *app)

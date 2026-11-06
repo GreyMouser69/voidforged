@@ -217,12 +217,15 @@ namespace {
 			if (!out.empty()) {
 				out.append("~");
 			}
+			// "item:qty:icon:bag slot:name", the bag slot 0-based (the dinput8's FUN_1019bed0, per hailstone-nms
+			// nms_vault.h); the old "item:name:charges:icon" left every vaulted bag looking empty
 			out.append(fmt::format(
-				"{}:{}:{}:{}",
+				"{}:{}:{}:{}:{}",
 				row.item_id,
-				SanitizeField(item->Name),
 				row.charges,
-				item->Icon
+				item->Icon,
+				row.bag_slot - 1,
+				SanitizeField(item->Name)
 			));
 		}
 		return out;

@@ -1054,6 +1054,8 @@ public:
 	inline void SetNmsVaultMerchant(bool value) { m_nms_vault_merchant = value; }
 	inline uint32 GetNmsVaultMerchantId() const { return m_nms_vault_merchant_id; }
 	inline void SetNmsVaultMerchantId(uint32 value) { m_nms_vault_merchant_id = value; }
+	inline bool GetNmsPersonalLootWindow() const { return m_nms_personal_loot_window; }
+	inline void SetNmsPersonalLootWindow(bool value) { m_nms_personal_loot_window = value; }
 	const std::vector<EQ::skills::SkillType> GetAutoSkillsList() const;
 	const std::vector<EQ::skills::SkillType> GetAvailableAutoSkills() const;
 
@@ -2358,6 +2360,7 @@ private:
 	bool m_nms_vault_bank = false;
 	bool m_nms_vault_merchant = false;
 	uint32 m_nms_vault_merchant_id = 0;
+	bool m_nms_personal_loot_window = false; // said Hello in this zone: Hailstone's loot window, not OP_NmsLootOffer
 public:
 	bool IsLockSavePosition() const;
 	void SetLockSavePosition(bool lock_save_position);

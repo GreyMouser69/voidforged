@@ -1643,6 +1643,56 @@ static_assert(sizeof(NmsLootOfferHeader_Struct) == 86, "NmsLootOfferHeader_Struc
 static_assert(sizeof(NmsLootOfferEntry_Struct) == 150, "NmsLootOfferEntry_Struct must match the installed add-on entry");
 static_assert(sizeof(NmsLootDecision_Struct) == 75, "NmsLootDecision_Struct must match the installed add-on decision payload");
 
+// The same offers for Hailstone's NMS add-on (projecthailstone/hailstone-nms nms_packets.h), whose Personal Loot
+// window speaks the original NMS server's protocol. A client that sends the Hello (action 20) gets these instead
+// of OP_NmsLootOffer. OP_PersonalLootList: header, then count rows; count 0 clears the window.
+#pragma pack(push, 1)
+struct PersonalLootListHeader_Struct
+{
+	uint32 flags; // 1: show the window
+	uint32 count;
+};
+
+struct PersonalLootRow_Struct
+{
+	uint32 pending_id; // the offer id, echoed in OP_PersonalLootAction
+	uint32 item_id;
+	uint32 icon;
+	uint32 quantity;
+	uint32 charges;
+	uint32 sell_value;   // copper the Sell button pays; 0 makes it a Destroy button
+	uint32 seconds_left; // until the offer expires
+	uint8  rule;
+	uint8  lore;
+	uint8  no_drop;
+	uint8  augmented;
+	char   item_name[64];
+	char   npc_name[64];
+};
+
+struct PersonalLootAction_Struct
+{
+	uint32 action;
+	uint32 pending_id;
+	uint32 item_id;
+	uint32 value;
+};
+
+struct PersonalLootSettings_Struct
+{
+	uint32 flags; // 1: personal loot is on
+	uint32 sell_under;
+	uint32 timeout_seconds;
+	uint8  defer_in_combat;
+	uint8  report_enabled;
+	uint8  padding[2];
+};
+#pragma pack(pop)
+
+static_assert(sizeof(PersonalLootRow_Struct) == 160, "PersonalLootRow_Struct must match the Hailstone NMS add-on row");
+static_assert(sizeof(PersonalLootAction_Struct) == 16, "PersonalLootAction_Struct must match the Hailstone NMS add-on action");
+static_assert(sizeof(PersonalLootSettings_Struct) == 16, "PersonalLootSettings_Struct must match the Hailstone NMS add-on settings");
+
 /*
 ** Consider Struct
 */

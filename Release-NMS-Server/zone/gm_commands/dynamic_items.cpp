@@ -5,6 +5,7 @@
 #include "../../common/say_link.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <map>
 #include <numeric>
@@ -435,7 +436,38 @@ namespace {
 			table_rows += rows[i];
 		}
 
-		std::string text = top + DialogueWindow::Table(table_rows) + bottom;
+		std::string text = top;
+		if (c->GetNmsPersonalLootWindow()) {
+			// Hailstone's popup draws no tables (its cells run together), so it gets one line per row:
+			// "Stat: cell   cell   cell"
+			std::string lines;
+			size_t      pos = 0;
+			while ((pos = table_rows.find("<tr>", pos)) != std::string::npos) {
+				const size_t row_end = table_rows.find("</tr>", pos);
+				const auto   row     = table_rows.substr(pos + 4, row_end - pos - 4);
+				std::vector<std::string> cells;
+				size_t                   cell = 0;
+				while ((cell = row.find("<td>", cell)) != std::string::npos) {
+					const size_t cell_end = row.find("</td>", cell);
+					cells.push_back(row.substr(cell + 4, cell_end - cell - 4));
+					cell = cell_end + 5;
+				}
+				// An empty last cell (no change) is left out; one mid-row shows "-" so the columns keep their places
+				std::string line;
+				for (size_t i = 0; i < cells.size(); ++i) {
+					if (cells[i].empty() && i + 1 == cells.size()) {
+						continue;
+					}
+					const auto &value = cells[i].empty() ? std::string("-") : cells[i];
+					line += i == 0 ? value + ":" : "   " + value;
+				}
+				lines += line + DialogueWindow::Break();
+				pos = row_end + 5;
+			}
+			text += lines + bottom;
+		} else {
+			text += DialogueWindow::Table(table_rows) + bottom;
+		}
 		if (page_count > 1) {
 			text += DialogueWindow::Break() + fmt::format("Page {} of {}", page, page_count);
 		}
@@ -638,6 +670,96 @@ namespace {
 		SendDynInfoTable(c, *worn, e, fmt::format("Compare #{} with worn #{}", number, worn->number), page, fmt::format("#dyninfo {}", number));
 	}
 
+	// #dyninfo data: the same information as tagged chat lines for a client add-on to read (and hide), the way the
+	// vault sends VAULTDATA lines. A field never holds the separator: a '|' in a name becomes '/'.
+	std::string DataField(std::string s)
+	{
+		std::replace(s.begin(), s.end(), '|', '/');
+		return s;
+	}
+
+	void SendDataLine(Client *c, const std::string &line)
+	{
+		c->Message(Chat::White, "%s", line.c_str());
+	}
+
+	// DYNDATA|items|begin|<count>
+	// DYNDATA|group|<group>|<name>                       each slot group the player has items in
+	// DYNDATA|affix|<affix>|<label>|<is %>               each affix on any of those items
+	// DYNDATA|item|<#>|<item id>|<icon>|<group>|<worn>|<where>|<name>|<rolls>|<baseline #>|<better>|<worse>|<standout>
+	//     rolls: <affix>:<value>:<guaranteed>:<position 0-100>:<reforged>, comma separated; baseline # is the worn item
+	//     in its group (0 for none, or for the worn item itself), which better / worse / standout are against
+	// DYNDATA|items|end
+	void SendDynInfoData(Client *c, const std::vector<DynInfoEntry> &entries)
+	{
+		SendDataLine(c, fmt::format("DYNDATA|items|begin|{}", entries.size()));
+
+		for (int group = 0; group < DynamicItemsManager::SlotGroupCount(); ++group) {
+			if (std::any_of(entries.begin(), entries.end(), [&](const DynInfoEntry &e) { return e.group == group; })) {
+				SendDataLine(c, fmt::format("DYNDATA|group|{}|{}", group, DataField(DynamicItemsManager::SlotGroupName(group))));
+			}
+		}
+
+		std::vector<EQ::eDynamicAffixID> affixes;
+		for (const auto &e : entries) {
+			for (const auto &line : e.rolls) {
+				if (std::find(affixes.begin(), affixes.end(), line.affix) == affixes.end()) {
+					affixes.push_back(line.affix);
+				}
+			}
+		}
+		std::sort(affixes.begin(), affixes.end());
+		for (const auto affix : affixes) {
+			bool       is_pct = false;
+			const auto label  = TableLabel(affix, is_pct);
+			SendDataLine(c, fmt::format("DYNDATA|affix|{}|{}|{}", static_cast<int>(affix), DataField(label), is_pct ? 1 : 0));
+		}
+
+		for (const auto &e : entries) {
+			std::vector<std::string> rolls;
+			for (const auto &line : e.rolls) {
+				rolls.push_back(fmt::format(
+					"{}:{}:{}:{}:{}",
+					static_cast<int>(line.affix),
+					line.value,
+					line.guaranteed ? 1 : 0,
+					static_cast<int>(std::lround(std::clamp(line.position, 0.0, 1.0) * 100)),
+					line.reforged ? 1 : 0
+				));
+			}
+
+			const auto  baseline = GroupBaseline(entries, e.group);
+			int         baseline_number = 0, better = 0, worse = 0;
+			std::string standout;
+			if (baseline && baseline != &e) {
+				const auto cmp  = DynamicItemsManager::Compare(baseline->rolls, e.rolls, false);
+				baseline_number = baseline->number;
+				better          = cmp.better;
+				worse           = cmp.worse;
+				standout        = cmp.standout;
+			}
+
+			const auto item = e.inst->GetItem();
+			SendDataLine(c, fmt::format(
+				"DYNDATA|item|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}",
+				e.number,
+				e.inst->GetID(),
+				item->Icon,
+				e.group,
+				e.equipped ? 1 : 0,
+				DataField(e.where),
+				DataField(item->Name),
+				Strings::Join(rolls, ","),
+				baseline_number,
+				better,
+				worse,
+				DataField(standout)
+			));
+		}
+
+		SendDataLine(c, "DYNDATA|items|end");
+	}
+
 	// armor_set_bonuses.stat_id (see Client::CheckArmorSetBonuses) as the matching affix, where there is one
 	EQ::eDynamicAffixID SetStatAffix(int32 stat_id)
 	{
@@ -796,8 +918,14 @@ namespace {
 	}
 
 	// Totals of everything the character's worn gear gives: dynamic item rolls, other items and every
-	// augment (including those in dynamic items), and active armor set bonuses
-	void SendDynInfoWorn(Client *c, const std::vector<DynInfoEntry> &entries, int page = 1)
+	// augment (including those in dynamic items), and active armor set bonuses. as_data sends them as lines:
+	// DYNDATA|worn|begin|<dynamic worn>|<other items worn>|<augments worn>
+	// DYNDATA|wstat|<label>|<is %>|<dynamic>|<items>|<sets>|<cap, 0 for none>
+	// DYNDATA|set|<Armor/Jewelry/Weapons>|<name>|<pieces worn>|<thresholds, / separated>|<active, / separated>
+	// DYNDATA|setspell|<name>|<the set's spell bonus>     (after its set)
+	// DYNDATA|effect|<worn/focus>|<spell>|<sources>
+	// DYNDATA|worn|end
+	void SendDynInfoWorn(Client *c, const std::vector<DynInfoEntry> &entries, int page = 1, bool as_data = false)
 	{
 		std::map<EQ::eDynamicAffixID, WornTotals> totals;
 		std::map<std::string, WornTotals>         other; // stats with no affix
@@ -889,7 +1017,8 @@ namespace {
 		};
 		static const char *set_kind_names[] = {"Armor", "Jewelry", "Weapons"};
 
-		std::vector<std::tuple<SetKind, std::string, std::string>> set_entries; // kind, name, lines
+		// kind, name, popup lines, data lines
+		std::vector<std::tuple<SetKind, std::string, std::string, std::vector<std::string>>> set_entries;
 		for (const auto &[set_id, pieces] : c->CountEquippedArmorSetPieces()) {
 			const auto bonuses = g_armor_set_bonuses_map.find(set_id);
 			if (bonuses == g_armor_set_bonuses_map.end()) {
@@ -970,14 +1099,28 @@ namespace {
 			for (const auto &spell_bonus : spell_bonuses) {
 				lines += "&nbsp;&nbsp;" + DialogueWindow::ColorMessage("light_blue_1", spell_bonus) + DialogueWindow::Break();
 			}
-			set_entries.emplace_back(kind, name, std::move(lines));
+
+			std::vector<std::string> data_lines = {fmt::format(
+				"DYNDATA|set|{}|{}|{}|{}|{}",
+				set_kind_names[kind],
+				DataField(name),
+				pieces,
+				thresholds.empty() ? "" : join(thresholds),
+				active.empty() ? "" : join(active)
+			)};
+			for (const auto &spell_bonus : spell_bonuses) {
+				data_lines.push_back(fmt::format("DYNDATA|setspell|{}|{}", DataField(name), DataField(spell_bonus)));
+			}
+			set_entries.emplace_back(kind, name, std::move(lines), std::move(data_lines));
 		}
 
 		// Armor, then jewelry, then weapons; by name within each
 		std::sort(set_entries.begin(), set_entries.end());
-		std::string set_lines;
+		std::string              set_lines;
+		std::vector<std::string> data_lines;
 		for (const auto &e : set_entries) {
 			set_lines += std::get<2>(e);
+			data_lines.insert(data_lines.end(), std::get<3>(e).begin(), std::get<3>(e).end());
 		}
 
 		// Worn effects of one family don't stack (highest wins, Spells:AdditiveBonusWornType), so drop each
@@ -1008,6 +1151,11 @@ namespace {
 					"light_blue_1",
 					fmt::format("{} ({})", spells[worn_effects[i].spell_id].name, worn_effects[i].source)
 				) + DialogueWindow::Break();
+				data_lines.push_back(fmt::format(
+					"DYNDATA|effect|worn|{}|{}",
+					DataField(spells[worn_effects[i].spell_id].name),
+					DataField(worn_effects[i].source)
+				));
 			}
 		}
 
@@ -1069,7 +1217,52 @@ namespace {
 					"light_blue_1",
 					fmt::format("{} ({})", spells[focuses[i].first].name, Strings::Join(focuses[i].second, ", "))
 				) + DialogueWindow::Break();
+				data_lines.push_back(fmt::format(
+					"DYNDATA|effect|focus|{}|{}",
+					DataField(spells[focuses[i].first].name),
+					DataField(Strings::Join(focuses[i].second, ", "))
+				));
 			}
+		}
+
+		if (as_data) {
+			SendDataLine(c, fmt::format("DYNDATA|worn|begin|{}|{}|{}", dynamic_worn, items_worn, augs_worn));
+			auto data_row = [&](const std::string &name, const WornTotals &v, bool is_pct, int32 cap = 0) {
+				SendDataLine(c, fmt::format(
+					"DYNDATA|wstat|{}|{}|{}|{}|{}|{}",
+					DataField(name),
+					is_pct ? 1 : 0,
+					v.dynamic,
+					v.items,
+					v.sets,
+					cap
+				));
+			};
+			// The same rows, in the same order, as the popup below
+			for (const auto &[affix, v] : totals) {
+				bool       is_pct = false;
+				const auto name   = TableLabel(affix, is_pct);
+				data_row(name, v, is_pct, WornCap(c, affix));
+				if (affix == EQ::AFFIX_HEROIC_WIS && other.contains("Heroic Charisma")) {
+					data_row("Heroic Charisma", other["Heroic Charisma"], false);
+				}
+			}
+			for (const auto &[label, v] : other) {
+				if (label == "Heroic Charisma" && totals.contains(EQ::AFFIX_HEROIC_WIS)) {
+					continue;
+				}
+				std::string name   = label;
+				const bool  is_pct = name.ends_with(" %");
+				if (is_pct) {
+					name.resize(name.size() - 2);
+				}
+				data_row(name, v, is_pct);
+			}
+			for (const auto &line : data_lines) {
+				SendDataLine(c, line);
+			}
+			SendDataLine(c, "DYNDATA|worn|end");
+			return;
 		}
 
 		if (totals.empty() && other.empty()) {
@@ -1140,6 +1333,16 @@ namespace {
 void command_dyninfo(Client *c, const Seperator *sep)
 {
 	const auto entries = GatherDynamicItems(c);
+
+	// For a client add-on (the Hailstone Dynamic Items window): tagged lines instead of popups
+	if (sep->argnum >= 1 && !strcasecmp(sep->arg[1], "data")) {
+		if (sep->argnum >= 2 && !strcasecmp(sep->arg[2], "worn")) {
+			SendDynInfoWorn(c, entries, 1, true);
+		} else {
+			SendDynInfoData(c, entries);
+		}
+		return;
+	}
 
 	// Before the empty check: set pieces that aren't dynamic items still have bonuses to total
 	if (sep->argnum >= 1 && !strcasecmp(sep->arg[1], "worn")) {

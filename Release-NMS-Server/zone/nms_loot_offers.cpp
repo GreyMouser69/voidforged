@@ -38,6 +38,18 @@ namespace {
 	bool tables_checked = false;
 	bool tables_ready = false;
 
+	// Hailstone's NMS add-on: OP_PersonalLootList's show flag and the OP_PersonalLootAction actions it sends
+	// (hailstone-nms nms_packets.h). Its window has only Keep and Sell; Sell on an offer worth nothing destroys it.
+	constexpr uint32 kPersonalLootShow = 1;
+	constexpr uint32 kPersonalLootKeep = 1, kPersonalLootSell = 3, kPersonalLootLootAll = 5,
+		kPersonalLootSellAll = 6, kPersonalLootRefresh = 7, kPersonalLootInspect = 9,
+		kPersonalLootSetDefer = 14, kPersonalLootSetReport = 15, kPersonalLootSetSellUnder = 16,
+		kPersonalLootGetSettings = 17, kPersonalLootInspectItem = 18, kPersonalLootHistory = 19,
+		kPersonalLootHello = 20;
+	constexpr uint32 kPersonalLootMaxRows = 100;
+
+	void SendPersonalLootList(Client *c, uint32 flags);
+
 	bool EnsureTables()
 	{
 		if (tables_checked) {
@@ -262,6 +274,11 @@ namespace {
 		if (!c) {
 			return;
 		}
+		// Hailstone's window replaces its whole list with each packet, so it always gets every offer here
+		if (c->GetNmsPersonalLootWindow()) {
+			SendPersonalLootList(c, kPersonalLootShow);
+			return;
+		}
 
 		std::vector<const NmsLootOffer *> active;
 		active.reserve(offers.size());
@@ -335,6 +352,99 @@ namespace {
 			}
 		}
 		return false;
+	}
+
+	// What NmsLootOfferApply's Sell pays for this offer, 0 when it refuses to sell it
+	uint64 OfferSellCopper(const NmsLootOffer &offer)
+	{
+		const auto *item = database.GetItem(offer.item_id);
+		if (!item || item->Price == 0 || item->NoDrop == 0 || item->SummonedFlag || OfferHasAugments(offer)) {
+			return 0;
+		}
+		const int16 qty = offer.charges > 0 ? offer.charges : 1;
+		return static_cast<uint64>(item->Price) * static_cast<uint64>(qty);
+	}
+
+	void SendPersonalLootList(Client *c, uint32 flags)
+	{
+		if (!c || !zone) {
+			return;
+		}
+
+		std::vector<NmsLootOffer> active;
+		for (auto &offer : LoadOffers(c->CharacterID(), zone->GetZoneID(), 0, 0)) {
+			if (!offer.passed && active.size() < kPersonalLootMaxRows) {
+				active.push_back(std::move(offer));
+			}
+		}
+
+		const uint32 count = static_cast<uint32>(active.size());
+		const uint32 size = sizeof(PersonalLootListHeader_Struct) + (count * sizeof(PersonalLootRow_Struct));
+		auto outapp = new EQApplicationPacket(OP_PersonalLootList, size);
+		memset(outapp->pBuffer, 0, size);
+		auto *header = reinterpret_cast<PersonalLootListHeader_Struct *>(outapp->pBuffer);
+		header->flags = flags;
+		header->count = count;
+
+		auto *rows = reinterpret_cast<PersonalLootRow_Struct *>(outapp->pBuffer + sizeof(PersonalLootListHeader_Struct));
+		for (uint32 i = 0; i < count; ++i) {
+			const auto &offer = active[i];
+			const auto *item = database.GetItem(offer.item_id);
+			const uint32 charges = offer.charges > 0 ? static_cast<uint32>(offer.charges) : 0;
+			rows[i].pending_id = offer.id;
+			rows[i].item_id = offer.item_id;
+			rows[i].icon = offer.icon;
+			rows[i].quantity = item && item->Stackable ? std::max<uint32>(charges, 1) : 1;
+			rows[i].charges = charges;
+			rows[i].sell_value = static_cast<uint32>(std::min<uint64>(OfferSellCopper(offer), UINT32_MAX));
+			rows[i].seconds_left = static_cast<uint32>(RemainingExpireSeconds(offer));
+			rows[i].lore = item && item->LoreFlag ? 1 : 0;
+			rows[i].no_drop = item && item->NoDrop == 0 ? 1 : 0;
+			rows[i].augmented = OfferHasAugments(offer) ? 1 : 0;
+			strn0cpy(rows[i].item_name, offer.name.c_str(), sizeof(rows[i].item_name));
+			// The window's "from" column: who passed it, else the corpse it came from while that corpse is still here
+			std::string from;
+			if (!offer.passed_from.empty()) {
+				from = fmt::format("passed by {}", offer.passed_from);
+			}
+			else if (auto *corpse = entity_list.GetCorpseByID(static_cast<uint16>(offer.corpse_id))) {
+				if (corpse->GetNmsLootSerial() == offer.corpse_serial) {
+					from = corpse->GetCleanName();
+				}
+			}
+			strn0cpy(rows[i].npc_name, from.c_str(), sizeof(rows[i].npc_name));
+		}
+
+		c->QueuePacket(outapp);
+		safe_delete(outapp);
+	}
+
+	void SendPersonalLootSettings(Client *c)
+	{
+		auto outapp = new EQApplicationPacket(OP_PersonalLootSettings, sizeof(PersonalLootSettings_Struct));
+		memset(outapp->pBuffer, 0, outapp->size);
+		auto *s = reinterpret_cast<PersonalLootSettings_Struct *>(outapp->pBuffer);
+		s->flags = NmsLootOffersEnabled() ? 1 : 0;
+		s->timeout_seconds = static_cast<uint32>(std::max(0, RuleI(Custom, NmsLootOfferExpireSeconds)));
+		c->QueuePacket(outapp);
+		safe_delete(outapp);
+	}
+
+	// No loot history is kept on this server: an empty one, so the History tab stops waiting
+	void SendPersonalLootHistory(Client *c)
+	{
+		auto outapp = new EQApplicationPacket(OP_PersonalLootHistory, sizeof(uint32));
+		memset(outapp->pBuffer, 0, outapp->size);
+		c->QueuePacket(outapp);
+		safe_delete(outapp);
+	}
+
+	// Claiming an offer discovers its item, as taking it off a corpse does (Corpse::LootCorpseItem)
+	void DiscoverOfferItem(Client *c, uint32 item_id)
+	{
+		if (RuleB(Character, EnableDiscoveredItems) && c && !c->GetGM() && !c->IsDiscovered(item_id)) {
+			c->DiscoverItem(item_id);
+		}
 	}
 
 	bool OfferStillClaimable(Client *c, const NmsLootOffer &offer)
@@ -732,6 +842,30 @@ void NmsLootOfferRestoreOnZoneIn(Client *c)
 	);
 }
 
+// Takes the offer off the list and carries out the action; an offer the action could not finish is saved again.
+// False when it was not carried out.
+static bool DecideOffer(Client *c, NmsLootOffer match, NmsLootAction action, const std::string &pass_to)
+{
+	if (!DeleteOffer(c->CharacterID(), match.id)) {
+		c->Message(Chat::White, "[NMS] That loot offer has expired.");
+		return false;
+	}
+
+	if (NmsLootOfferApply(c, match, action, pass_to)) {
+		return true;
+	}
+	if (match.expire_remaining <= 0) {
+		return false;
+	}
+	match.id = 0;
+	match.passed = false;
+	if (SaveOffer(match, match.expire_remaining)) {
+		std::vector<NmsLootOffer> one{match};
+		SendOffers(c, one, match.corpse_id);
+	}
+	return false;
+}
+
 void NmsLootOfferHandleDecision(Client *c, const EQApplicationPacket *app)
 {
 	if (!c || !app || !NmsLootOffersEnabled() || !EnsureTables()) {
@@ -780,22 +914,120 @@ void NmsLootOfferHandleDecision(Client *c, const EQApplicationPacket *app)
 		return;
 	}
 
-	if (!DeleteOffer(c->CharacterID(), match.id)) {
-		c->Message(Chat::White, "[NMS] That loot offer has expired.");
+	DecideOffer(c, match, action, pass_to);
+}
+
+void NmsLootOfferHandlePersonalLootAction(Client *c, const EQApplicationPacket *app)
+{
+	if (!c || !app) {
+		return;
+	}
+	if (app->size < sizeof(PersonalLootAction_Struct)) {
+		LogError(
+			"Received OP_PersonalLootAction packet. Expected size {}, received size {}.",
+			sizeof(PersonalLootAction_Struct),
+			app->size
+		);
 		return;
 	}
 
-	if (!NmsLootOfferApply(c, match, action, pass_to)) {
-		if (match.expire_remaining <= 0) {
-			return;
+	const auto *in = reinterpret_cast<const PersonalLootAction_Struct *>(app->pBuffer);
+	const bool enabled = NmsLootOffersEnabled() && EnsureTables() && zone;
+	switch (in->action) {
+	case kPersonalLootHello:
+		// Once per zone, a few seconds in: from now on this client gets OP_PersonalLootList, not OP_NmsLootOffer
+		c->SetNmsPersonalLootWindow(true);
+		SendPersonalLootSettings(c);
+		SendPersonalLootHistory(c);
+		if (enabled) {
+			ExpireOffers(c->CharacterID());
+			SendPersonalLootList(c, 0);
 		}
-		match.id = 0;
-		match.passed = false;
-		if (SaveOffer(match, match.expire_remaining)) {
-			std::vector<NmsLootOffer> one{match};
-			SendOffers(c, one, match.corpse_id);
-		}
+		return;
+	case kPersonalLootGetSettings:
+		SendPersonalLootSettings(c);
+		return;
+	case kPersonalLootHistory:
+		SendPersonalLootHistory(c);
+		return;
+	case kPersonalLootSetDefer:
+	case kPersonalLootSetReport:
+	case kPersonalLootSetSellUnder:
+		c->Message(Chat::White, "[NMS] This server has no loot settings to change.");
+		SendPersonalLootSettings(c);
+		return;
+	default:
+		break;
 	}
+	if (!enabled) {
+		return;
+	}
+
+	c->SetNmsPersonalLootWindow(true);
+	ExpireOffers(c->CharacterID());
+	switch (in->action) {
+	case kPersonalLootRefresh:
+		break;
+	case kPersonalLootInspect:
+	case kPersonalLootInspectItem: {
+		EQ::ItemInstance *inst = nullptr;
+		NmsLootOffer offer;
+		if (in->action == kPersonalLootInspect) {
+			if (LoadOfferById(c->CharacterID(), in->pending_id, offer)) {
+				inst = MakeLootItem(offer);
+			}
+		}
+		else if (in->item_id) {
+			inst = database.CreateItem(in->item_id);
+		}
+		if (inst) {
+			c->SendItemPacket(0, inst, ItemPacketViewLink);
+			safe_delete(inst);
+		}
+		return;
+	}
+	case kPersonalLootKeep:
+	case kPersonalLootSell: {
+		NmsLootOffer offer;
+		if (!LoadOfferById(c->CharacterID(), in->pending_id, offer)) {
+			c->Message(Chat::White, "[NMS] That loot offer has expired.");
+			break;
+		}
+		NmsLootAction action = NmsLootAction::Keep;
+		if (in->action == kPersonalLootSell) {
+			// The window labels an offer worth nothing "Destroy"
+			action = OfferSellCopper(offer) ? NmsLootAction::Sell : NmsLootAction::Destroy;
+		}
+		DecideOffer(c, offer, action, "");
+		break;
+	}
+	case kPersonalLootLootAll:
+	case kPersonalLootSellAll: {
+		uint32 left = 0;
+		for (auto &offer : LoadOffers(c->CharacterID(), zone->GetZoneID(), 0, 0)) {
+			if (offer.passed) {
+				continue;
+			}
+			if (in->action == kPersonalLootSellAll && !OfferSellCopper(offer)) {
+				// Sell All never destroys: an offer worth nothing stays for the player to decide
+				++left;
+				continue;
+			}
+			const bool keep = in->action == kPersonalLootLootAll;
+			if (!DecideOffer(c, offer, keep ? NmsLootAction::Keep : NmsLootAction::Sell, "") && keep) {
+				break; // full bags: the rest would fail the same way
+			}
+		}
+		if (left) {
+			c->Message(Chat::White, "[NMS] %u items with no sell value were left for you to keep or destroy.", left);
+		}
+		break;
+	}
+	default:
+		return;
+	}
+
+	SendPersonalLootList(c, 0);
 }
 
 bool NmsLootOfferApply(Client *c, const NmsLootOffer &offer, NmsLootAction action, const std::string &pass_to)
@@ -838,6 +1070,7 @@ bool NmsLootOfferApply(Client *c, const NmsLootOffer &offer, NmsLootAction actio
 						SendOffers(c, one, leftover.corpse_id);
 					}
 				}
+				DiscoverOfferItem(c, offer.item_id);
 				c->Message(Chat::White, "[NMS] %s added to inventory.", item_name.c_str());
 				safe_delete(inst);
 				return true;
@@ -846,6 +1079,7 @@ bool NmsLootOfferApply(Client *c, const NmsLootOffer &offer, NmsLootAction actio
 			safe_delete(inst);
 			return false;
 		}
+		DiscoverOfferItem(c, offer.item_id);
 		c->Message(Chat::White, "[NMS] %s added to inventory.", item_name.c_str());
 		safe_delete(inst);
 		return true;
@@ -898,6 +1132,7 @@ bool NmsLootOfferApply(Client *c, const NmsLootOffer &offer, NmsLootAction actio
 			safe_delete(inst);
 			return false;
 		}
+		DiscoverOfferItem(c, offer.item_id);
 		c->Message(Chat::White, "[NMS] %s added to your bank.", item_name.c_str());
 		safe_delete(inst);
 		return true;
@@ -918,6 +1153,7 @@ bool NmsLootOfferApply(Client *c, const NmsLootOffer &offer, NmsLootAction actio
 			safe_delete(inst);
 			return false;
 		}
+		DiscoverOfferItem(c, offer.item_id);
 		c->Message(Chat::White, "[NMS] %s added to your vault.", item_name.c_str());
 		safe_delete(inst);
 		return true;

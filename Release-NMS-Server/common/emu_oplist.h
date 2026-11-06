@@ -642,4 +642,8 @@ N(OP_CharacterSetUnlockRequest),
 N(OP_SuppressBuffNameInfo),
 N(OP_NmsLootOffer),
 N(OP_NmsLootDecision),
+N(OP_PersonalLootList),
+N(OP_PersonalLootAction),
+N(OP_PersonalLootSettings),
+N(OP_PersonalLootHistory),
 // mail and chat opcodes located in ../mail_oplist.h

@@ -48,6 +48,7 @@ void NmsLootOfferOnCorpseCreated(Corpse *corpse, Client *credit, NPC *source);
 bool NmsLootOfferEmptiesCorpse(Client *credit);
 void NmsLootOfferRestoreOnZoneIn(Client *c);
 void NmsLootOfferHandleDecision(Client *c, const EQApplicationPacket *app);
+void NmsLootOfferHandlePersonalLootAction(Client *c, const EQApplicationPacket *app);
 bool NmsLootOfferApply(Client *c, const NmsLootOffer &offer, NmsLootAction action, const std::string &pass_to);
 struct LootItem;
 void NmsLootOfferForgetCorpseItem(uint32 character_id, uint32 corpse_id, uint64 corpse_serial, const LootItem *item);
