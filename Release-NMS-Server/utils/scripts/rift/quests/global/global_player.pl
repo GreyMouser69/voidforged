@@ -30,6 +30,7 @@ sub EVENT_ENTERZONE {
     $client->ChangeSize($default_size);
 
 	plugin::CommonCharacterUpdate($client);
+	plugin::RaidPortalClaim($client);
 
 	# Greater Rifts can be in zones from later expansions; the rift itself is the gate
 	if (!InGreaterRift() && !plugin::is_eligible_for_zone($client, $zonesn)) {
@@ -799,7 +800,7 @@ sub UpdateDayNightCycle {
 # NMS: Plane of Time access (account-wide Maelin flag) unlocks The Void
 # A Greater Rift instance (the rift sets gr_tier_<instance id> when it opens; see rift_core.lua is_rift)
 sub InGreaterRift {
-	return ($instanceid > 0 && quest::get_data("gr_tier_$instanceid") ne '');
+	return ($instanceid > 0 && (quest::get_data("gr_tier_$instanceid") ne '' || quest::get_data("raid_instance_$instanceid") ne ''));
 }
 
 sub HasVoidAccess {

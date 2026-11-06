@@ -1,0 +1,2 @@
+-- Raid portal version (instance version 50): load none of the zone's encounters, so its
+-- open-world events and controllers stay out of the raid. See docs/raids/RAID_PORTAL.md.

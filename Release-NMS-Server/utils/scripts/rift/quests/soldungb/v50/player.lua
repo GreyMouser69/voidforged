@@ -1,0 +1,2 @@
+-- Raid portal version of Nagafen's Lair: no player script, so the zone's banish of players over level 80
+-- (soldungb/player.pl) never fires on the raid.
