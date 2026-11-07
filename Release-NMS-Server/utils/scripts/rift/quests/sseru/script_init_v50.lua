@@ -1,0 +1,1 @@
+-- Raid portal Seru (version 50): the server loads this file instead of script_init.lua, so no Xeru there.
