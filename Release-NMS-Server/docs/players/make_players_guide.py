@@ -273,7 +273,8 @@ story += bullets([
     "and Echo of Luck (more experience, and luckier loot), Echo of Selo (run speed) and Echo of Power (HP, "
     "mana, AC, stats and haste).",
     "<b>Nautilus Vault.</b> Every character receives a Nautilus Vault on login. It gives you extra storage, lets "
-    "you use clickies stored in it, and opens your bank and a merchant from anywhere.",
+    "you use clickies stored in it, and opens your bank and a merchant from anywhere. A clicky buff from an item "
+    "in the vault stays up for as long as the item is there, and comes back after a dispel or death.",
     "<b>Personal loot (/nmsloot).</b> When a mob dies, every group or raid member in the zone gets their own "
     "loot roll, offered in the /nmsloot window: keep it, sell it for platinum on the spot, or pass it to someone. "
     "Coin is split automatically. These personal rolls replace the corpse's normal loot, solo or grouped; quest "
@@ -284,7 +285,9 @@ story += bullets([
     "<b>Bags and curios.</b> The Collector of Curios in the Bazaar sells Hero's Backpacks, Rucksacks and Boxes "
     "of Holding, Combinerators, the Unattuner and delivery vouchers for platinum.",
     "<b>Blessings.</b> Sneed Galliway (Bazaar and Qeynos) sells Heroes' and Legends' Blessings for 1 copper each.",
-    "<b>Lockouts.</b> Non-respawning instances lock you out for 6 hours.",
+    "<b>#zone.</b> <b>#zone &lt;zone&gt;</b> takes you to that zone's safe spot. Zones whose entrance door needs "
+    "a key (Sleeper's Tomb, Vex Thal, the Mire) need that key on your keyring or in your bags.",
+    "<b>Lockouts.</b> Non-respawning instances lock you out for 6 hours, respawning ones for 5 minutes.",
 ])
 
 # --- The Void --------------------------------------------------------------------------------
@@ -303,7 +306,7 @@ story.append(table([
     ["NPC", "What they do"],
     ["Zebuxoruk", "Storyteller and keeper of the rifts. Hail him, ask about the Fabric, then click a tier to open a rift."],
     ["Chronal Quartermaster", "Tier 1 class armor, for Chronal Shards."],
-    ["Tier vendors", "Armor, jewelry and augments for each gear tier, three vendors per tier, each titled with what it sells (for example \"Tier 2 Jewelry\")."],
+    ["Tier vendors", "Armor, jewelry, augments and weapons for each gear tier, four vendors per tier, each titled with what it sells (for example \"Tier 2 Jewelry\")."],
     ["Chronal Artificer", "Reforges rolled gear (see Chapter 5)."],
     ["Soulbinder Ilsara", "Binds your soul, so you can respawn right beside the rifts."],
 ], [1.6 * inch, CW - 1.6 * inch], bold_first_col=True))
@@ -366,22 +369,23 @@ story += section("Chapter 3", "Rift Gear",
                  "the moment you buy it.")
 story.append(P("Gear tiers and unlocks", "h2"))
 story.append(P("Every gear tier unlocks from your own deepest clear. Vendors hide what you haven't unlocked, "
-               "so an empty vendor means you need a deeper clear. Armor and jewelry vendors only list pieces "
-               "for your own classes."))
+               "so an empty vendor means you need a deeper clear. Armor, jewelry and weapon vendors only list "
+               "pieces for your own classes."))
 story.append(table([
-    ["Gear tier", "Armor", "Jewelry", "Augments", "Stats", "Name prefix"],
-    ["1", "always", "clear 25", "clear 75", "1x", "\u2014"],
-    ["2", "clear 100", "clear 125", "clear 175", "1.5x", "Tempered"],
-    ["3", "clear 200", "clear 225", "clear 275", "2x", "Exalted"],
-    ["4", "clear 300", "clear 325", "clear 375", "2.5x", "Eternal"],
-    ["5", "clear 400", "clear 425", "clear 475", "3x", "Timeless"],
-], [0.8 * inch, 0.95 * inch, 0.95 * inch, 0.95 * inch, 0.7 * inch, CW - 4.35 * inch]))
+    ["Gear tier", "Armor", "Jewelry", "Augments", "Weapons", "Stats", "Name prefix"],
+    ["1", "always", "clear 25", "clear 50", "clear 75", "1x", "Chronal (augments, weapons)"],
+    ["2", "clear 100", "clear 125", "clear 150", "clear 175", "1.5x", "Tempered"],
+    ["3", "clear 200", "clear 225", "clear 250", "clear 275", "2x", "Exalted"],
+    ["4", "clear 300", "clear 325", "clear 350", "clear 375", "2.5x", "Eternal"],
+    ["5", "clear 400", "clear 425", "clear 450", "clear 475", "3x", "Timeless"],
+], [0.75 * inch, 0.85 * inch, 0.85 * inch, 0.85 * inch, 0.85 * inch, 0.6 * inch, CW - 4.75 * inch]))
 story.append(Spacer(1, 6))
 story.append(table([
     ["Price (Chronal Shards)", "Tier 1", "Tier 2", "Tier 3", "Tier 4", "Tier 5"],
     ["Armor piece", "25", "50", "100", "200", "400"],
     ["Jewelry piece", "15", "30", "60", "120", "240"],
     ["Augment", "40", "80", "160", "320", "640"],
+    ["Weapon", "30", "60", "120", "240", "480"],
 ], [1.7 * inch] + [(CW - 1.7 * inch) / 5] * 5, bold_first_col=True))
 story.append(Spacer(1, 6))
 story += bullets([
@@ -494,17 +498,28 @@ story.append(P("Divine Insight adds heal crit and mana regen; Arcane Insight add
 
 aug = []
 aug.append(P("Augments", "h2"))
-aug.append(P("Rift augments have fixed stats, any class can use them, and they fit slot 1 or 2 of any rift "
-               "armor or jewelry piece. Higher tiers multiply the stats; the focus effect stays the same."))
+aug.append(P("Each tier sells one all-stat augment, the <b>Facet</b>, so it suits every class. It fits aug slot "
+               "type 1, 2 or 4, and comes as <b>Facet I</b> and <b>Facet II</b>: the same stats under two names, "
+               "because one item can't hold the same augment twice. Names follow the tier prefix (Chronal Facet I up "
+               "to Timeless Facet II), and higher tiers multiply the stats. Facets carry no focus effect."))
 aug.append(table([
-    ["Augment", "Tier 1 stats", "Focus"],
-    ["Bulwark Shard", "+150 HP, +15 AC, +5 heroic STA, +10 Magic, Fire and Cold resist", "\u2014"],
-    ["Ferocity Shard", "+15 Attack, +10 STR, +10 DEX, +4 heroic STR, +4 heroic DEX", "\u2014"],
-    ["Arcana Shard", "+150 Mana, +20 Spell Damage, +10 INT", "Improved Damage V"],
-    ["Mending Shard", "+150 Mana, +20 Heal Amount, +10 WIS", "Improved Healing V"],
-    ["Alacrity Shard", "+200 Mana, +8 INT, +8 WIS", "Spell Haste V"],
-    ["Valor Shard", "+100 HP, +10 Attack, +10 Heal Amount", "Mana Preservation VII"],
-], [1.2 * inch, CW - 2.75 * inch, 1.55 * inch], bold_first_col=True))
+    ["Tier 1 stats", ""],
+    ["AC", "+15"],
+    ["HP, Mana, Endurance", "+150 each"],
+    ["STR, STA, AGI, DEX, WIS, INT, CHA", "+10 each"],
+    ["Magic, Fire, Cold, Disease, Poison resist", "+10 each"],
+    ["Heroic STR, STA, DEX", "+4 each"],
+    ["Attack, Spell Damage, Heal Amount", "+15 each"],
+], [CW - 1.6 * inch, 1.6 * inch], bold_first_col=True))
+
+aug.append(P("Weapons", "h2"))
+aug.append(P("The Weaponsmiths sell the Plane of Time weapons and shields (Darkblade of the Warlord, Greatstaff of "
+               "Power, Bow of the Tempest, Shield of Strife and the rest) at their Legendary stats, plus two range "
+               "items: Stone of Flowing Time for melee and Spool of Woven Time for casters. Each tier multiplies "
+               "damage and every stat, so Darkblade of the Warlord has 76 damage and 450 HP at tier 1 and 228 and "
+               "1,350 at tier 5. Delay, procs, focus and click effects stay as they are; procs don't grow with the tier."))
+aug.append(P("Every weapon also rolls affixes for your class when you buy it, like armor: two-handers roll twice as "
+               "strong as one-handers, since they fill both hands. Each class sees only its own weapons, 6 to 14 per tier."))
 
 aug.append(P("Glamours", "h2"))
 aug.append(P("Rift armor has a glamour slot (type 21). Eighteen <b>Glamour Outfitters</b> stand in the East "
