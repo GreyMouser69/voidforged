@@ -1737,9 +1737,13 @@ void NmsVaultOnClientDestroy(Client *c)
 	bank_anchor.erase(c->CharacterID());
 }
 
+// The vault merchant is kept when its window closes: despawning the NPC the client's merchant window still points
+// at crashed clients on Done. The next NmsVaultHandleMerchant reuses it, and zoning (NmsVaultOnZoneIn) removes it.
 void NmsVaultOnMerchantEnd(Client *c)
 {
-	DepopVaultMerchant(c);
+	if (c) {
+		c->SetNmsVaultMerchant(false);
+	}
 }
 
 const EQ::ItemData *NmsVaultProcItem(Client *c, uint16 hand)
