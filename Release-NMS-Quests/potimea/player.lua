@@ -38,10 +38,10 @@ function event_click_door(e)
 						return
 					end
 
-					expedition:AddReplayLockout(14 * 60 * 60) -- 14 Hours
+					expedition:AddReplayLockout(6 * 60 * 60) -- 6 Hours
 
 					local expedition_identifier = string.format("potime-%d-phase", expedition:GetID())
-					eq.set_data(expedition_identifier, "0", "14H")
+					eq.set_data(expedition_identifier, "0", "6H")
 				end
 			else
 				e.self:Message(MT.Red, "You are currently locked out, try again once your lockout is over.")
