@@ -1,0 +1,2 @@
+-- Raid portal (version 50): the server loads this file instead of script_init.lua, so the open-world Tunare
+-- encounter stays out of raid instances. Tunare's portal fight is quests/growthplane/v50/127098.lua.

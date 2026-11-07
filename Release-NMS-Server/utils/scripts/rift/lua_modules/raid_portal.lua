@@ -135,7 +135,79 @@ portal.BOSSES = {
         name = "Bertoxxulous", tier = 4, npc_id = 200055, zone = "codecay", zone_id = 200, spellscale = 200,
         spawn = { -2, 283, -247, 0 }, entry = { -161.2, 199.7, -260.9, 88.6 },
     },
+    -- Bosses with their own mechanics, ported to quests/<zone>/v50/ (2026-11-08, untested in game)
+    tunare = {
+        name = "Tunare", tier = 2, npc_id = 127098, zone = "growthplane", zone_id = 127, spellscale = 200,
+        spawn = { -247, 1609, -40, 424 }, entry = { -368.9, 1664.9, -15.6, 160 },
+    },
+    tormax = {
+        name = "King Tormax", tier = 2, npc_id = 113215, zone = "kael", zone_id = 113, spellscale = 200,
+        spawn = { 1700, -1521, -180.4, 8 }, entry = { 1763, -1025, -204.3, 256 },
+    },
+    bristlebane = {
+        name = "Bristlebane", tier = 2, npc_id = 126160, zone = "mischiefplane", zone_id = 126, spellscale = 200,
+        spawn = { 164.5, 552.4, 146.2, 255.3 }, entry = { -26, 394, 168.1, 96 },
+    },
+    emperor = {
+        name = "Emperor Ssraeshza", tier = 3, npc_id = 162227, zone = "ssratemple", zone_id = 162, spellscale = 200,
+        spawn = { 997, -325, 415, 384 }, entry = { 820.3, -325, 400, 128 },
+    },
+    xegony = {
+        name = "Xegony", tier = 4, npc_id = 215056, zone = "poair", zone_id = 215, spellscale = 200,
+        spawn = { 64, 24.7, 1467.3, 386.8 }, entry = { -214.4, 64.3, 1442.8, 128 },
+    },
+    solusek = {
+        name = "Solusek Ro", tier = 4, npc_id = 212025, zone = "solrotower", zone_id = 212, spellscale = 200,
+        spawn = { 0, -1591, 269.5, 0 }, entry = { 38, -1391, 252.5, 256 },
+    },
+    agnarr = {
+        name = "Agnarr the Storm Lord", tier = 4, npc_id = 209026, zone = "bothunder", zone_id = 209, spellscale = 200,
+        spawn = { -899, -1740, 2263.6, 126 }, entry = { -901.5, -1542.7, 2252.4, 256 },
+    },
+    muzlakh = {
+        name = "Muzlakh the Chosen", tier = 4, npc_id = 215053, zone = "poair", zone_id = 215, spellscale = 200,
+        spawn = { -602.2, 15.2, 1447.7, 385.5 }, entry = { -520.1, 227.7, 1449.2, 256 },
+    },
+    quarm = {
+        name = "Quarm", tier = 5, npc_id = 223201, zone = "potimeb", zone_id = 223, spellscale = 200,
+        spawn = { -401, -1106, 32.5, 185.6 }, entry = { 244, -1106, -1.1, 194 },
+    },
+    rallos = {
+        name = "Rallos Zek", tier = 5, npc_id = 223168, zone = "potimeb", zone_id = 223, spellscale = 200,
+        spawn = { 264, -279, 18.75, 435 }, entry = { 82.6, -153, 3.3, 160 },
+    },
+    terris = {
+        name = "Terris Thule", tier = 5, npc_id = 223075, zone = "potimeb", zone_id = 223, spellscale = 200,
+        spawn = { -310, 307, 365, 190 }, entry = { -395, 0, 350, 0 },
+    },
+    vallon = {
+        name = "Vallon Zek", tier = 5, npc_id = 223078, zone = "potimeb", zone_id = 223, spellscale = 200,
+        spawn = { 405, 75, 358, 384 }, entry = { 405, -84, 358, 0 },
+    },
+    innoruukpot = {
+        name = "Innoruuk (Plane of Time)", tier = 5, npc_id = 223167, zone = "potimeb", zone_id = 223, spellscale = 200,
+        spawn = { 303.3, 306, 13.3, 323 }, entry = { 165.6, 103.5, 3.3, 64 },
+    },
+    noqufiel = {
+        name = "Noqufiel", tier = 5, npc_id = 296065, zone = "inktuta", zone_id = 296, spellscale = 200,
+        spawn = { 20, -706, -126, 384 }, entry = { -65, -587, -127.1, 192 },
+    },
+    tunat = {
+        name = "Tunat`Muram Cuu Vauax", tier = 5, npc_id = 298055, zone = "tacvi", zone_id = 298, spellscale = 200,
+        spawn = { 309, -170.8, 21.3, 118.8 }, entry = { 462, -171, 32, 384 },
+    },
+    matriarch = {
+        name = "Ancient Cragbeast Matriarch", tier = 5, npc_id = 297056, zone = "txevu", zone_id = 297, spellscale = 200,
+        spawn = { 627, 0, -364.8, 118 }, entry = { 724, -232, -371.6, 448 },
+    },
+    votal = {
+        name = "Zun`Muram Votal", tier = 5, npc_id = 284080, zone = "ferubi", zone_id = 284, spellscale = 200,
+        spawn = { -735.4, -1075.4, 39.5, 0 }, entry = { -883.4, -948.6, 37.6, 160 },
+    },
 }
+
+-- The controller signals the boss with this after a wipe reset, so a boss with phases can put them back
+portal.RESET_SIGNAL = 50
 
 function portal.bosses_in_tier(tier)
     local out = {}
@@ -229,6 +301,55 @@ function portal.boss_timer(e)
         e.self:GMMove(s[1], s[2], s[3], s[4])
         e.self:DeleteEntityVariable("raid_adds")
         eq.stop_timer("raid_leash")
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- Helpers for bosses with their own mechanics
+-- ----------------------------------------------------------------------------
+
+-- The portal sets a boss's stats after its own spawn event runs, so the raid values are read on first use
+local RESISTS = { mr = "GetMR", fr = "GetFR", cr = "GetCR", pr = "GetPR", dr = "GetDR" }
+
+local function raid_base(npc)
+    if not npc:EntityVariableExists("raid_min") then
+        npc:SetEntityVariable("raid_min", tostring(npc:GetMinDMG()))
+        npc:SetEntityVariable("raid_max", tostring(npc:GetMaxDMG()))
+        for stat, getter in pairs(RESISTS) do
+            npc:SetEntityVariable("raid_" .. stat, tostring(npc[getter](npc)))
+        end
+    end
+    return tonumber(npc:GetEntityVariable("raid_min")), tonumber(npc:GetEntityVariable("raid_max"))
+end
+
+-- Open-world scripts set phase damage as fixed numbers. In the portal the same change is kept as a
+-- ratio of the boss's own base damage, applied to its raid damage: set_damage(npc, 1262 / 2250, 4500 / 7000)
+function portal.set_damage(npc, min_ratio, max_ratio)
+    local base_min, base_max = raid_base(npc)
+    npc:ModifyNPCStat("min_hit", tostring(math.floor(base_min * min_ratio)))
+    npc:ModifyNPCStat("max_hit", tostring(math.floor(base_max * max_ratio)))
+end
+
+-- All five resists moved by the same amount from the boss's raid value (0 puts them back)
+function portal.set_resists(npc, delta)
+    raid_base(npc)
+    for stat in pairs(RESISTS) do
+        npc:ModifyNPCStat(stat, tostring(tonumber(npc:GetEntityVariable("raid_" .. stat)) + delta))
+    end
+end
+
+-- Spawns an add and points it at the target, when there is one
+function portal.spawn_add(npc_id, x, y, z, h, target)
+    local add = eq.spawn2(npc_id, 0, 0, x, y, z, h)
+    if add.valid and target and target.valid then
+        add:AddToHateList(target, 1)
+    end
+    return add
+end
+
+function portal.depop_all(npc_ids)
+    for _, npc_id in ipairs(npc_ids) do
+        eq.depop_all(npc_id)
     end
 end
 

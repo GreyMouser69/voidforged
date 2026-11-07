@@ -113,6 +113,10 @@ Entry points are trash spawn points 150 to 550 units from the boss, unverified i
 `script_init_v50.lua` keeps sleeper, sebilis, codecay and ssratemple from loading their encounters, and
 `soldungb/v50/player.lua` replaces the zone's banish of players over level 80.
 
+On 2026-11-08 the other 17 Own bosses got scripts, which are in the repo but not deployed or tested. See "Own bosses,
+2026-11-08" below. Muzlakh and Solusek Ro need no v50 file, because their open-world scripts work in an instance as
+they are.
+
 | Tier | Boss | NPC ID | Zone | Mechanics | Work needed |
 |---|---|---:|---|---|---|
 | 1 | Lady Vox | 73057 | permafrost | Shared | Remove banish, which can't fire below level 81 anyway. Keeps her cleric spells (parent list 1: roots, self-buffs, Complete Heal) as on Live |
@@ -130,34 +134,81 @@ Entry points are trash spawn points 150 to 550 units from the boss, unverified i
 | 2 | The Final Arbiter | 128045 | sleeper | Shared | Check against the Sleeper encounter |
 | 2 | Sontalak | 120005 | westwastes | Shared | None found |
 | 2 | Vulak`Aerr | 124155 | templeveeshan | Shared | Its call for a guard does nothing, since no script or spawn creates that guard; spawn at its Thylex point |
-| 2 | Tunare | 127098 | growthplane | Own | Encounter script; find a spawn point |
-| 2 | King Tormax | 113215 | kael | Own | Its call for help needs its guards with it |
-| 2 | Bristlebane | 126160 | mischiefplane | Own | Handle its NPC lookup |
+| 2 | Tunare | 127098 | growthplane | Own | Script written: calls 2 protectors on pull and every 60s; encounter blocked |
+| 2 | King Tormax | 113215 | kael | Own | Script written: 4 guards spawn with him and are called on pull and every 5 min |
+| 2 | Bristlebane | 126160 | mischiefplane | Own | Script written: puppet god waves at 80/50/20; encounter blocked |
 | 3 | Lord Inquisitor Seru | 159691 | sseru | Shared | None found; keep its leash |
 | 3 | Thought Horror Overfiend | 164078 | thedeep | Shared | Check its death plugin |
 | 3 | High Priest of Ssraeshza | 162076 | ssratemple | Shared | None found |
 | 3 | Xerkizh the Creator | 162190 | ssratemple | Shared | Check its death plugin |
 | 3 | Kaas Thox Xi Aten Ha Ra | 158007 | vexthal | Shared | None found |
-| 3 | Emperor Ssraeshza | 162227 | ssratemple | Own | Encounter script; find a spawn point |
+| 3 | Emperor Ssraeshza | 162227 | ssratemple | Shared | Reclassified: his script has no combat mechanics, so he uses the shared template |
 | 3 | Aten Ha Ra | 158096 | vexthal | Shared | Spawn at its trigger's point; this is the NPC the trigger spawns, not 158006 |
 | 4 | Saryrn | 207001 | potorment | Own | Check shared state; flag and projection code already skips other versions |
-| 4 | Xegony | 215056 | poair | Own | Keep signals working with her controller |
+| 4 | Xegony | 215056 | poair | Own | Script written: lieutenant and guard waves at 98/82/66/50/34/18 run to her |
 | 4 | Fennin Ro | 217054 | pofire | Shared | Spawn at its controller's point |
-| 4 | Solusek Ro | 212025 | solrotower | Own | Check shared state |
-| 4 | Agnarr the Storm Lord | 209026 | bothunder | Own | Waits for a signal from another NPC |
+| 4 | Solusek Ro | 212025 | solrotower | Own | No v50 file needed: the open-world script works in an instance |
+| 4 | Agnarr the Storm Lord | 209026 | bothunder | Own | Script written: lords at 98/75/50/25, storms every 120s; no trigger signal |
 | 4 | Rallos Zek the Warlord | 214113 | potactics | Own | Find a spawn point; remove its reliance on the trigger |
 | 4 | Mithaniel Marr | 220006 | hohonorb | Shared | Spawn at its trigger's point |
 | 4 | Bertoxxulous | 200055 | codecay | Shared | Spawn at its trigger's point |
-| 4 | Muzlakh the Chosen | 215053 | poair | Own | None found |
-| 5 | Quarm | 223201 | potimeb | Own | Start it without the phase path and controller |
-| 5 | Rallos Zek | 223168 | potimeb | Own | Remove its reliance on the phase controller |
-| 5 | Terris Thule | 223075 | potimeb | Own | Remove its reliance on the phase controller |
-| 5 | Vallon Zek | 223078 | potimeb | Own | Remove its reliance on the phase controller |
-| 5 | Innoruuk | 223167 | potimeb | Own | Remove its reliance on the phase controller |
-| 5 | Noqufiel | 296065 | inktuta | Own | Signals, shared state and a hand-off |
-| 5 | Tunat`Muram Cuu Vauax | 298055 | tacvi | Own | Encounter script |
-| 5 | Ancient Cragbeast Matriarch | 297056 | txevu | Own | Encounter script |
-| 5 | Zun`Muram Votal | 284080 | ferubi | Own | None found |
+| 4 | Muzlakh the Chosen | 215053 | poair | Own | No v50 file needed: the open-world script works in an instance |
+| 5 | Quarm | 223201 | potimeb | Own | Script written: vortexes every 50s, AE sets per head, heads at 76/51/26; no phase path |
+| 5 | Rallos Zek | 223168 | potimeb | Own | Script written: minions and boars at 90/75/50/25, rampage and flurry steps |
+| 5 | Terris Thule | 223075 | potimeb | Own | Script written: nightmare pairs walk in at 91/51/11 |
+| 5 | Vallon Zek | 223078 | potimeb | Own | Script written: arena tether, two copies at 51%; fights without Tallon |
+| 5 | Innoruuk | 223167 | potimeb | Own | Script written: guardians and hatebringers at 75 and 20, idle adds pulled in |
+| 5 | Noqufiel | 296065 | inktuta | Own | Script written: True and Mirror swap every 10%, reveal at each 5%, state in zone variables |
+| 5 | Tunat`Muram Cuu Vauax | 298055 | tacvi | Own | Script written: second form only, eight boss phases 90 to 20 |
+| 5 | Ancient Cragbeast Matriarch | 297056 | txevu | Own | Encounter copy `acm_portal` written: bearer buffs set against raid stats |
+| 5 | Zun`Muram Votal | 284080 | ferubi | Own | Script written: two Pixtt spawn with him and join on pull; room leash |
+
+## Own bosses, 2026-11-08
+
+Each boss has `quests/<zone>/v50/<npc id>.lua`, written from its open-world script and encounter. None is deployed or
+tested yet. `utils/scripts/rift/sql/2026_11_08_01_raid_portal_own_bosses.sql` adds the version 50 rows for the 11 new
+zones. It has not been applied.
+
+Shared pieces in `lua_modules/raid_portal.lua`:
+
+- `portal.RESET_SIGNAL` (50). After a wipe reset, the Raid_Controller sends it to the boss, and each phased boss
+  depops its adds and re-arms its HP events.
+- `portal.set_damage(npc, min_ratio, max_ratio)` and `portal.set_resists(npc, delta)`. Open-world phase changes use
+  fixed numbers. Here they become a ratio of the boss's own base damage, or a resist delta, applied to its raid stats.
+  The raid base is saved the first time they are used, after the global scaling.
+- `portal.spawn_add` and `portal.depop_all`.
+
+Local `event_spawn` runs before the global scaling in `global_npc.pl`, so HP or stats that must be set after the
+scaling (Noqufiel's HP carry-over, the Matriarch's bearer buffs) are set from a short timer.
+
+### Decisions for review (2026-11-08)
+
+| # | Boss | Decision | Why |
+|---|---|---|---|
+| 1 | Muzlakh, Solusek Ro | No v50 file; the open-world script runs as it is | Nothing in it depends on flags, the zone controller or version 0. Solusek's death unlocks doors 38/39, which the SQL copies |
+| 2 | Emperor Ssraeshza | Shared template, not Own | His script has no combat mechanics |
+| 3 | Tunare | Her open-world "zone assist" is replaced by calling 2 protectors on pull and every 60s | A fixed call is easier to tune per tier; review whether you want the original assist back |
+| 4 | King Tormax | His 4 guards spawn with him and are also called on pull and every 5 min | His call for help does nothing without guards nearby |
+| 5 | All phased bosses | Fixed phase damage becomes a ratio of the boss's base damage | Fixed numbers would undo the tier scaling |
+| 6 | All phased bosses | A wipe reset sends signal 50 so phases re-arm | The controller only heals and moves the boss |
+| 7 | Quarm | Starts at his spawn point; no phase 6 path, no zone status or Zebuxoruk signals | The portal spawns him directly |
+| 8 | Rallos Zek, Innoruuk (PoTime) | Spawn ready to fight, without their army of twelve | The army is part of the open-world phase controller |
+| 9 | Vallon Zek | Fights alone, without Tallon Zek | Tallon is a second boss with his own payout question; adding him is open |
+| 10 | Noqufiel | The True Image is the portal boss. The Mirror copies the True's HP and damage, because the global scaling would make it a 2% add | The pair respawns many times, so state is kept in zone variables |
+| 11 | Tunat | Only the second form, with its eight phases. The first form and phylacteries are skipped. A wipe respawns him fresh | The first form is a separate NPC that hands off on death |
+| 12 | Ancient Cragbeast Matriarch | A portal copy of the encounter (`acm_portal`), with two open-world bugs fixed: the hatchling and AE timers had mismatched names, so they never fired | It adds real difficulty; review whether to keep the fix |
+| 13 | Ancient Cragbeast Matriarch | The regeneration bearer's 6000 HP per tick is unchanged | Small against raid HP; scale it if testing shows it does nothing |
+| 14 | Zun`Muram Votal | His Pixtt come back 2s after a wipe reset, not 5 min | So the raid can try again at once |
+| 15 | Entry points | Some are guesses from spawn rows: Quarm (645 units away), Vallon (Tallon's spot), Tormax (500 units), Noqufiel (inside the room) | Check them in game |
+| 16 | Emperor Ssraeshza, Lord Inquisitor Seru | Both keep their bane requirement (special ability 22: melee immune except bane). Kept on purpose (user, 2026-11-08) | The portal scaling doesn't change special ability 22 |
+
+### Deploy steps (when testing)
+
+1. Back up peq with `~/voidforged/src/docker/backup.sh`, then apply the SQL.
+2. Copy `lua_modules/raid_portal.lua`, `quests/global/Raid_Controller.lua`, `quests/thevoida/1200071.lua` and the new
+   `quests/<zone>/v50/`, `script_init_v50.lua` and `txevu/encounters/acm_portal.lua` files to the box runtime.
+3. Zone rows are read at boot, so this needs a server restart, done when players are offline.
+4. Test each boss with `test <key> <size>` at the portal NPC.
 
 ## To test first
 

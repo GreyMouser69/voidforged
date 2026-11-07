@@ -1,0 +1,2 @@
+-- Raid portal (version 50): the server loads this file instead of script_init.lua, so the Bristlebane 2.0
+-- encounter stays out of raid instances. The portal fight is quests/mischiefplane/v50/126160.lua.

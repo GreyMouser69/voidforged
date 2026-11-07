@@ -1,0 +1,2 @@
+-- Raid portal (version 50): Tunat's second form is in v50/298055.lua, so the open-world temple
+-- encounters are not loaded here.

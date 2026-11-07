@@ -1,0 +1,2 @@
+-- Raid portal (version 50): Noqufiel's fight is in v50/296065.lua and v50/296066.lua, so the
+-- open-world kelekdrix and noqufiel encounters are not loaded here.

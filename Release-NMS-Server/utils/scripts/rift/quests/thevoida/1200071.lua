@@ -107,8 +107,8 @@ function event_say(e)
     local message = e.message:lower():gsub("[%s%c]+", " "):match("^ *(.-) *$")
 
     if message:findi("hail") then
-        e.self:Say(string.format("Open raid tier %s %s %s %s, or test a boss at a raid size: %s",
-            link("tier 1"), link("tier 2"), link("tier 3"), link("tier 4"), link("bosses")))
+        e.self:Say(string.format("Open raid tier %s %s %s %s %s, or test a boss at a raid size: %s",
+            link("tier 1"), link("tier 2"), link("tier 3"), link("tier 4"), link("tier 5"), link("bosses")))
         if get_active(client:CharacterID()) then
             e.self:Say("You also have a fight open: " .. link("re-enter") .. " or " .. link("close") .. ".")
         end

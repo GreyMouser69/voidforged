@@ -44,6 +44,7 @@ function event_timer(e)
         spawned:Heal()
         spawned:GMMove(boss.spawn[1], boss.spawn[2], boss.spawn[3], boss.spawn[4])
         spawned:DeleteEntityVariable("raid_adds")
+        eq.signal(info.boss_id, portal.RESET_SIGNAL) -- a boss with phases puts them back
         e.self:SetEntityVariable("raid_idle", "0")
     end
 end
