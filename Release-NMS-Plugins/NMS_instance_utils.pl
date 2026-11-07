@@ -12,7 +12,7 @@ sub OfferStandardInstance {
 	my $zonesn = plugin::val('$zonesn');
 	my $dz_version = 254;
 	my $non_respawning_duration = 6 * 60 * 60; # 6 Hours
-	my $respawning_duration =  30 * 60; # 30 minutes
+	my $respawning_duration =  5 * 60; # 5 minutes
 	my $dz_lifetime = 7 * 24 * 60 * 60; # 7 Days
 	my ($expedition_name, $min_players, $max_players, $dz_zone, $x, $y, $z, $heading) = @_;
 
@@ -50,7 +50,6 @@ sub OfferStandardInstance {
 			plugin::NPCTell("I offer you a Trial. $expedition_name lies before you, do you accept the challenge?");
 
 			if (plugin::IsNMS()) {
-				plugin::YellowText("Notice: Instances will become more difficult for each player in your group beyond the second.");
 				plugin::YellowText("[$non_respawning_link] will not repopulate over time, and the most powerful enemies may be found within.");
 				if ($allow_respawning) {
 					plugin::YellowText("[$respawning_link] will repopulate over time, but many rare enemies may not be found inside.");
