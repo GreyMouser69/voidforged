@@ -4404,7 +4404,8 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 		case SE_Invisibility:
 		case SE_InvisVsAnimals:
 		case SE_InvisVsUndead: {
-			if (buff.ticsremaining > 3) {
+			// A held buff doesn't count down, so a fade started here would stick at 3 tics
+			if (buff.ticsremaining > 3 && !IsGroupSuspendableBuff(buff.spellid, buff)) {
 				if (!IsBardSong(buff.spellid)) {
 					double break_chance = 2.0;
 					if (caster) {
@@ -4427,7 +4428,7 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 		case SE_ImprovedInvisAnimals:
 		case SE_Invisibility2:
 		case SE_InvisVsUndead2: {
-			if (!IsBardSong(buff.spellid)) {
+			if (!IsBardSong(buff.spellid) && !IsGroupSuspendableBuff(buff.spellid, buff)) {
 				if (buff.ticsremaining <= 3 && buff.ticsremaining > 1) {
 					MessageString(Chat::Spells, INVIS_BEGIN_BREAK);
 				}
