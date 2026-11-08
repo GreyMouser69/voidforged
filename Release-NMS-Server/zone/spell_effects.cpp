@@ -3996,7 +3996,7 @@ bool Mob::IsGroupSuspendableBuff(uint16 spell_id, Buffs_Struct buff) {
 	Client* client = GetOwnerOrSelf()->CastToClient();
 
 	if (caster && client) {
-		if (caster == client || (client->GetGroup() && client->GetGroup()->IsGroupMember(client))) {
+		if (caster == client || (client->GetGroup() && client->GetGroup()->IsGroupMember(caster))) {
 			if (GetSpellEffectIndex(spell_id, SE_DivineAura) == -1) {
 				if (caster->GetInv().HasClickEffect(spell_id)) {
 					return true;
