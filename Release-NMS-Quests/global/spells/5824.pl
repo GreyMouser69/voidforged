@@ -11,18 +11,9 @@ sub EVENT_SPELL_EFFECT_CLIENT {
         return;
     }
 
-    # Define possible locations in zone 151 (Bazaar)
+    # Arrival spot in zone 151 (Bazaar)
     my %baz_locations = (
-        'safe_location' => [quest::GetZoneSafeX(151), quest::GetZoneSafeY(151), quest::GetZoneSafeZ(151), quest::GetZoneSafeHeading(151)],
-        'Location A'    => [-135, -550, 5, 300],
-        'Location B'    => [100, -500, 5, 300],
-        'Location C'    => [95, -300, 5, 300],
-        'Location G'    => [45, -820, 4, 450],
-        'Upstairs'      => [15, -655, 27, 290],
-        'Aporia 1'      => [217, -578, 2, 3],
-        'Aporia 2'      => [-179, -151, -16, 254],
-        'Aporia 3'      => [168, -149, -16, 259],
-        'Aporia 4'      => [-148, -481, 3, 310],
+        'Arrival'       => [-85.32, -812.10, 3.13, 385.75],
     );
 
     # Define possible locations in ecommons zone
@@ -55,7 +46,8 @@ sub EVENT_SPELL_EFFECT_CLIENT {
     my $randomized_x    = $chosen_loc->[0] + int(rand(11)) - 5;
     my $randomized_y    = $chosen_loc->[1] + int(rand(11)) - 5;
     my $z               = $chosen_loc->[2];
-    my $heading         = rand(512);
+    # Bazaar arrivals face the spot's heading; East Commons stays random
+    my $heading         = ($keys[0] eq 'Arrival') ? $chosen_loc->[3] : rand(512);
 
     if ($zoneid != $bind_loc) {
         # Save the current location

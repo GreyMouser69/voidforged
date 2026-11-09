@@ -275,8 +275,12 @@ bool Zone::LoadZoneObjects()
 		position.y = data.y;
 		position.z = data.z;
 
+		// Keep the stored z where the map has no floor, or the object lands at BEST_Z_INVALID
 		if (zone->HasMap()) {
-			data.z = zone->zonemap->FindBestZ(position, nullptr);
+			const float best_z = zone->zonemap->FindBestZ(position, nullptr);
+			if (best_z != BEST_Z_INVALID) {
+				data.z = best_z;
+			}
 		}
 
 		EQ::ItemInstance *inst = nullptr;
