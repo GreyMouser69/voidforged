@@ -150,6 +150,55 @@ The guild hall zone is also where new characters land today (`quests/crescent/pl
 `SendToGuildHall`, and `quests/guildhall/player.pl` gives starter AAs). New characters keep a separate shared copy
 of the zone, so guild halls stay private.
 
+## Rank access *(idea, added 2026-11-09)*
+
+Guild ranks decide how much of the guild's lifetime achievements a member can use. A new recruit doesn't get
+instant access to what older members earned; access opens up as the guild promotes them, once the guild feels they
+have earned it. This covers items, spells, buffs, clickies and the other perks below.
+
+- Each perk the guild unlocks has a minimum guild rank to use it.
+- The leader sets the minimum rank per perk, or per group of perks.
+- Recruits start with the basics and gain the rest by promotion. Nothing is lost when a member is demoted again, except
+  access.
+- The guild ranks are the game's own (RoF2 guilds have eight ranks, with names the guild can change).
+
+## Guild power from rifts *(idea, added 2026-11-09)*
+
+As members progress through the rifts, the guild gains power toward unlocking guild perks: new or higher AAs, spells
+and clickies that help members push into the next rift tiers.
+
+- The guild's power is its Infamy. There is no separate rift currency: Infamy unlocks the perk tiers, the same way
+  it unlocks the store (decided 2026-11-09).
+- Progress is shown as Infamy toward the next perk tier.
+- Members use the perks according to [Rank access](#rank-access-idea-added-2026-11-09).
+
+Perks come in two kinds (decided 2026-11-09):
+
+| Kind | Who pays | Examples |
+|---|---|---|
+| Guild perks | The treasury, bought by the leader | Guild-wide buffs, guild tribute, access to special things that benefit the whole guild |
+| Member unlocks | The member, with their own platinum | Special items, such as a Call of the Hero clicky or a resurrection clicky usable by all races and classes |
+
+- Infamy opens both kinds. A member unlock is then bought by each member who wants it, if their rank allows.
+- Member items are lore and no-drop, and stop working when the member leaves the guild (decided 2026-11-09).
+- Guild buffs work like guild tribute (decided 2026-11-09): new guild tribute entries that Infamy unlocks, paid from
+  the treasury, active for every member who opts in. The server already has guild tribute (`zone/tribute.cpp`,
+  `Guild:Tribute*` rules): a guild runs up to two tributes at a time, they cost guild favor over time, and each
+  member opts in or out. Rank access adds a minimum rank check where the tribute is applied
+  (`Client::DoGuildTributeUpdate`).
+
+To decide:
+
+- The perk list for each Infamy tier, and the prices.
+- Recast per member item, depending on what it does. Member items have no charges (decided 2026-11-09).
+- Whether the treasury pays guild favor directly.
+
+Two active guild tributes is enough (decided 2026-11-09), because each one can stack many effects. A guild tribute
+tier is an item, and its bonuses apply through `AddItemBonuses` (`zone/bonuses.cpp`): item stats (HP, mana, AC,
+regen, resists, haste and the rest), a worn effect spell with up to 12 effect slots, and a focus. That covers what
+the Echo server buffs do, without using buff slots. If a guild buff ever has to show in the buff window, the Echo
+approach (`Zone::HandlePermanentServerBuffs`) can be copied for guild members instead.
+
 ## Technical notes
 
 What exists today:
