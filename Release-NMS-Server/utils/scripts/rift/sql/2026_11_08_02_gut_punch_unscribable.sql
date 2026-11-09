@@ -4,3 +4,5 @@
 -- stopped. Same fix as 2026_11_04_01_echo_spells_unscribable.sql.
 UPDATE spells_new SET classes1 = 255 WHERE id = 12802;
 DELETE FROM character_spells WHERE spell_id = 12802;
+-- Players who had it memorized could not remove it from the spell bar once it left the book
+DELETE FROM character_memmed_spells WHERE spell_id = 12802;
