@@ -5421,6 +5421,15 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app) {
 				MessageString(Chat::Skills, 12682); //You have moved and are no longer hidden!!
 			}
 		}
+
+		/* Break feign death if moving. A multiclass player whose client class can't feign isn't stood up by
+		   their client, so it never sends a standing appearance and the server would keep them feigned. */
+		if (GetFeigned()) {
+			SetFeigned(false);
+			playeraction = 0;
+			SetAppearance(eaStanding, false);
+			Message(Chat::Skills, "You have moved and are no longer feigning death.");
+		}
 		rewind_timer.Start(30000, true);
 	}
 
