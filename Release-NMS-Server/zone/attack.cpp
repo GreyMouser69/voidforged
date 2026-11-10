@@ -5166,7 +5166,8 @@ void Mob::HealDamage(uint64 amount, Mob* caster, uint16 spell_id)
 														spells[spell_id].name).c_str());
 
 		} else if ( // this is going to almost always be a HoT, this a fallback condition for spells with no valid caster.
-			CastToClient()->GetFilter(FilterHealOverTime) != FilterShowSelfOnly ||
+			// Only players get this message. The heal is on themselves, so "self only" shows it; only Hide hides it.
+			IsClient() &&
 			CastToClient()->GetFilter(FilterHealOverTime) != FilterHide
 		) {
 			Message(Chat::NonMelee, "You have been healed for %d points of damage.", acthealed);
