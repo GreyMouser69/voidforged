@@ -1968,7 +1968,8 @@ UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 0, max_val
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 21, max_value = 26 WHERE class_id = 3 AND affix = 'int';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 3 AND affix = 'mr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 3 AND affix = 'pr';
-UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 24, max_value = 30 WHERE class_id = 3 AND affix = 'spelldmg';
+)"
+R"(UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 24, max_value = 30 WHERE class_id = 3 AND affix = 'spelldmg';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 24, max_value = 35 WHERE class_id = 3 AND affix = 'sta';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 48, max_value = 59 WHERE class_id = 3 AND affix = 'str';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 26, max_value = 33 WHERE class_id = 3 AND affix = 'wis';
@@ -2038,7 +2039,8 @@ UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_val
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 6 AND affix = 'heroic_mr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 6 AND affix = 'heroic_pr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 353, max_value = 436 WHERE class_id = 6 AND affix = 'hp';
-UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 0, max_value = 11 WHERE class_id = 6 AND affix = 'hp_regen';
+)"
+R"(UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 0, max_value = 11 WHERE class_id = 6 AND affix = 'hp_regen';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 21, max_value = 26 WHERE class_id = 6 AND affix = 'int';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 6 AND affix = 'mr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 6 AND affix = 'pr';
@@ -2108,7 +2110,8 @@ UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_va
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 9 AND affix = 'fr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 24, max_value = 28 WHERE class_id = 9 AND affix = 'healamt';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 9 AND affix = 'heroic_cr';
-UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 9 AND affix = 'heroic_dr';
+)"
+R"(UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 9 AND affix = 'heroic_dr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 9 AND affix = 'heroic_fr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 9 AND affix = 'heroic_mr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 9 AND affix = 'heroic_pr';
@@ -2178,7 +2181,8 @@ UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_va
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 27, max_value = 32 WHERE class_id = 12 AND affix = 'dex';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 12 AND affix = 'dr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 12 AND affix = 'fr';
-UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 24, max_value = 28 WHERE class_id = 12 AND affix = 'healamt';
+)"
+R"(UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 24, max_value = 28 WHERE class_id = 12 AND affix = 'healamt';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 12 AND affix = 'heroic_cr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 12 AND affix = 'heroic_dr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 6, max_value = 12 WHERE class_id = 12 AND affix = 'heroic_fr';
@@ -2248,7 +2252,8 @@ UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 23, max_va
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 0, max_value = 13 WHERE class_id = 15 AND affix = 'avoidance';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 18, max_value = 23 WHERE class_id = 15 AND affix = 'cha';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 15 AND affix = 'cr';
-UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 37, max_value = 47 WHERE class_id = 15 AND affix = 'dex';
+)"
+R"(UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 37, max_value = 47 WHERE class_id = 15 AND affix = 'dex';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 15 AND affix = 'dr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 28, max_value = 42 WHERE class_id = 15 AND affix = 'fr';
 UPDATE dynamic_affix_pool SET guaranteed = 1, weight = 0, min_value = 26, max_value = 34 WHERE class_id = 15 AND affix = 'healamt';
