@@ -90,6 +90,9 @@ sub RaidPortalDeath {
 	return if quest::get_data("raid_paid_$instance_id") ne '';
 	quest::set_data("raid_paid_$instance_id", "1", $RAID_EXPIRES);
 
+	# The whole server hears about it, in yellow. The number is the raid tier's solo tier (tier x 100).
+	quest::worldwidemessage(15, $npc->GetCleanName() . " Rift (" . ($tier * 100) . ") has been defeated");
+
 	my $amount      = 1 << $tier;
 	my $entity_list = plugin::val('$entity_list');
 	foreach my $char_id (quest::GetCharactersInInstance($instance_id) =~ /\((\d+)\)/g) {

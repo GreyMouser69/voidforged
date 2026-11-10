@@ -183,6 +183,10 @@ local function record_clear(client, tier)
         -- Character-scoped copy: the tier gear vendors hide items until it reaches their unlock tier
         client:SetBucket(cfg.gear_unlock_bucket, tostring(tier))
         client:Message(15, string.format("Your deepest Fracture is now Tier %d. Tier %d is open to you.", tier, math.min(tier + 1, rift.MAX_TIER)))
+        -- Milestones go to the whole server, once per character (only a new deepest clear gets here)
+        if cfg.announce_every and cfg.announce_every > 0 and tier % cfg.announce_every == 0 then
+            eq.world_wide_message(15, string.format("%s has completed Chronal Rift %d", client:GetCleanName(), tier))
+        end
     elseif tier > deepest + 1 then
         client:Message(15, string.format("This Fracture was beyond your own reach; your deepest remains Tier %d.", deepest))
     end

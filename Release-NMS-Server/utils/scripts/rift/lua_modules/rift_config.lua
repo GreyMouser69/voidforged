@@ -17,6 +17,7 @@ return {
     time_limit     = 900,     -- seconds to kill the Guardian
     instance_grace = 180,     -- extra instance life so players can walk out after a fail
     max_tier       = 500,     -- hard cap; below it each player's own progression is the ceiling
+    announce_every = 25,      -- a new deepest clear at a multiple of this is announced to the whole server
 
     -- Character data bucket holding the deepest clear; tier gear vendor items are hidden until it reaches
     -- their unlock tier (merchantlist bucket_name / bucket_value, comparison 2 = >=)
