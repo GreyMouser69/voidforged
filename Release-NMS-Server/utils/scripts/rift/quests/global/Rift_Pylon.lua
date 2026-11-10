@@ -87,6 +87,18 @@ function event_say(e)
     end
 end
 
+-- A pylon someone attacked is "engaged", and a hail then fires event_aggro_say instead of event_say
+function event_aggro_say(e)
+    event_say(e)
+end
+
+-- Pylons never fight back: drop any hate right away so they stay out of combat
+function event_combat(e)
+    if e.joined then
+        e.self:WipeHateList()
+    end
+end
+
 function ActivatePylon(npc, client)
     -- Two players can trigger it in the same tick; only the first counts
     if npc:EntityVariableExists("used") then return end
